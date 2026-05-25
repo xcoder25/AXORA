@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -49,6 +50,7 @@ export default function LoginPage() {
     shortName: '',
     type: 'Combined',
     ownership: 'Private',
+    foundedYear: '',
     motto: '',
     phone: '',
     officialEmail: '',
@@ -56,6 +58,7 @@ export default function LoginPage() {
     city: '',
     academicSystem: 'Term System',
     numPeriods: '3',
+    levels: [] as string[],
     expectedPop: '',
     portalName: '',
     currency: 'USD',
@@ -92,6 +95,7 @@ export default function LoginPage() {
           shortName: schoolData.shortName,
           type: schoolData.type,
           ownership: schoolData.ownership,
+          foundedYear: schoolData.foundedYear,
           motto: schoolData.motto,
           contact: {
             officialEmail: schoolData.officialEmail || email,
@@ -103,7 +107,8 @@ export default function LoginPage() {
           },
           academicStructure: {
             system: schoolData.academicSystem,
-            count: parseInt(schoolData.numPeriods)
+            count: parseInt(schoolData.numPeriods),
+            levels: schoolData.levels
           },
           branding: {
             portalName: schoolData.portalName || schoolData.name,
@@ -164,6 +169,15 @@ export default function LoginPage() {
     }));
   };
 
+  const toggleLevel = (lvl: string) => {
+    setSchoolData(prev => ({
+      ...prev,
+      levels: prev.levels.includes(lvl)
+        ? prev.levels.filter(l => l !== lvl)
+        : [...prev.levels, lvl]
+    }));
+  };
+
   const availableModules = [
     { id: 'results', label: 'Result Management', icon: Sparkles },
     { id: 'attendance', label: 'Attendance', icon: Globe },
@@ -177,6 +191,8 @@ export default function LoginPage() {
     { id: 'inventory', label: 'Inventory & Assets', icon: Box },
     { id: 'parent-portal', label: 'Parent Engagement', icon: Heart }
   ];
+
+  const academicLevels = ['Nursery', 'Primary', 'Junior Secondary', 'Senior Secondary'];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-transparent">
@@ -293,7 +309,7 @@ export default function LoginPage() {
                             <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="Private">Private</SelectItem><SelectItem value="Public">Public</SelectItem></SelectContent>
                           </Select>
-                          <Input placeholder="Founded Year" type="number" className="bg-white/3 border-white/10 h-10 rounded-xl" />
+                          <Input placeholder="Founded Year" type="number" value={schoolData.foundedYear} onChange={e => setSchoolData({...schoolData, foundedYear: e.target.value})} className="bg-white/3 border-white/10 h-10 rounded-xl" />
                         </div>
                         <div className="space-y-3 pt-3 border-t border-white/5">
                           <Label className="text-[9px] font-semibold uppercase tracking-widest text-primary">Admin Credentials</Label>
@@ -314,10 +330,19 @@ export default function LoginPage() {
                           <Input type="number" placeholder="Cycles" value={schoolData.numPeriods} onChange={e => setSchoolData({...schoolData, numPeriods: e.target.value})} className="bg-white/3 border-white/10 h-10 rounded-xl" />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                          {['Nursery', 'Primary', 'Junior Secondary', 'Senior Secondary'].map(lvl => (
-                            <div key={lvl} className="flex items-center space-x-2 bg-white/3 p-2.5 rounded-xl border border-white/5">
-                              <Checkbox id={lvl} className="h-3.5 w-3.5 border-white/20" />
-                              <Label htmlFor={lvl} className="text-[10px]">{lvl}</Label>
+                          {academicLevels.map(lvl => (
+                            <div 
+                              key={lvl} 
+                              onClick={() => toggleLevel(lvl)}
+                              className={cn(
+                                "flex items-center space-x-2 p-2.5 rounded-xl border cursor-pointer transition-all",
+                                schoolData.levels.includes(lvl)
+                                  ? "bg-primary/10 border-primary/50 text-primary"
+                                  : "bg-white/3 border-white/5 text-muted-foreground hover:bg-white/8"
+                              )}
+                            >
+                              <Checkbox checked={schoolData.levels.includes(lvl)} onCheckedChange={() => {}} className="h-3.5 w-3.5 border-white/20 pointer-events-none" />
+                              <Label className="text-[10px] cursor-pointer pointer-events-none">{lvl}</Label>
                             </div>
                           ))}
                         </div>
