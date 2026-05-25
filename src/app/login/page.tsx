@@ -25,7 +25,8 @@ import {
   ShieldAlert,
   Bus,
   Laptop,
-  Box
+  Box,
+  ArrowRight
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
@@ -77,9 +78,26 @@ export default function LoginPage() {
     e.preventDefault();
     if (!auth || !db) return;
 
-    if (authMode === 'deploy-institution' && password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
+    if (authMode === 'deploy-institution') {
+      // Step navigation logic
+      if (deployStep === 'basic') {
+        setDeployStep('academic');
+        return;
+      }
+      if (deployStep === 'academic') {
+        setDeployStep('branding');
+        return;
+      }
+      if (deployStep === 'branding') {
+        setDeployStep('modules');
+        return;
+      }
+
+      // Final step validation
+      if (password !== confirmPassword) {
+        alert("Passwords do not match");
+        return;
+      }
     }
 
     setLoading(true);
@@ -300,8 +318,19 @@ export default function LoginPage() {
                     <ScrollArea className="h-[350px] pr-2">
                       <TabsContent value="basic" className="space-y-4 mt-0">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Input placeholder="School Name" value={schoolData.name} onChange={e => setSchoolData(prev => ({...prev, name: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" required />
-                          <Input placeholder="Short Alias (GA)" value={schoolData.shortName} onChange={e => setSchoolData(prev => ({...prev, shortName: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" />
+                          <Input 
+                            placeholder="School Name" 
+                            value={schoolData.name} 
+                            onChange={e => setSchoolData(prev => ({...prev, name: e.target.value}))} 
+                            className="bg-white/3 border-white/10 h-10 rounded-xl" 
+                            required={deployStep === 'basic'} 
+                          />
+                          <Input 
+                            placeholder="Short Alias (GA)" 
+                            value={schoolData.shortName} 
+                            onChange={e => setSchoolData(prev => ({...prev, shortName: e.target.value}))} 
+                            className="bg-white/3 border-white/10 h-10 rounded-xl" 
+                          />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <Select 
@@ -313,14 +342,41 @@ export default function LoginPage() {
                             <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="Private">Private</SelectItem><SelectItem value="Public">Public</SelectItem></SelectContent>
                           </Select>
-                          <Input placeholder="Founded Year" type="number" value={schoolData.foundedYear} onChange={e => setSchoolData(prev => ({...prev, foundedYear: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" />
+                          <Input 
+                            placeholder="Founded Year" 
+                            type="number" 
+                            value={schoolData.foundedYear} 
+                            onChange={e => setSchoolData(prev => ({...prev, foundedYear: e.target.value}))} 
+                            className="bg-white/3 border-white/10 h-10 rounded-xl" 
+                          />
                         </div>
                         <div className="space-y-3 pt-3 border-t border-white/5">
                           <Label className="text-[9px] font-semibold uppercase tracking-widest text-primary">Admin Credentials</Label>
-                          <Input type="email" placeholder="Admin Email" value={email} onChange={e => setEmail(e.target.value)} className="bg-white/3 border-white/10 h-10 rounded-xl" required />
+                          <Input 
+                            type="email" 
+                            placeholder="Admin Email" 
+                            value={email} 
+                            onChange={e => setEmail(e.target.value)} 
+                            className="bg-white/3 border-white/10 h-10 rounded-xl" 
+                            required={deployStep === 'basic'} 
+                          />
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="bg-white/3 border-white/10 h-10 rounded-xl" required />
-                            <Input type="password" placeholder="Confirm" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="bg-white/3 border-white/10 h-10 rounded-xl" required />
+                            <Input 
+                              type="password" 
+                              placeholder="Password" 
+                              value={password} 
+                              onChange={e => setPassword(e.target.value)} 
+                              className="bg-white/3 border-white/10 h-10 rounded-xl" 
+                              required={deployStep === 'basic'} 
+                            />
+                            <Input 
+                              type="password" 
+                              placeholder="Confirm" 
+                              value={confirmPassword} 
+                              onChange={e => setConfirmPassword(e.target.value)} 
+                              className="bg-white/3 border-white/10 h-10 rounded-xl" 
+                              required={deployStep === 'basic'} 
+                            />
                           </div>
                         </div>
                       </TabsContent>
@@ -411,7 +467,10 @@ export default function LoginPage() {
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
                   <div className="flex items-center gap-2">
                     {authMode === 'login' ? `Login as ${loginRole}` : 
-                     authMode === 'join-parent' ? "Join as Guardian" : "Initialize Institution"}
+                     authMode === 'join-parent' ? "Join as Guardian" : 
+                     (deployStep === 'modules' ? "Initialize Institution" : (
+                       <>Next Step <ArrowRight className="h-4 w-4 ml-1" /></>
+                     ))}
                   </div>
                 )}
               </Button>
