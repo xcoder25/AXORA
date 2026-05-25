@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -301,15 +300,20 @@ export default function LoginPage() {
                     <ScrollArea className="h-[350px] pr-2">
                       <TabsContent value="basic" className="space-y-4 mt-0">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Input placeholder="School Name" value={schoolData.name} onChange={e => setSchoolData({...schoolData, name: e.target.value})} className="bg-white/3 border-white/10 h-10 rounded-xl" required />
-                          <Input placeholder="Short Alias (GA)" value={schoolData.shortName} onChange={e => setSchoolData({...schoolData, shortName: e.target.value})} className="bg-white/3 border-white/10 h-10 rounded-xl" />
+                          <Input placeholder="School Name" value={schoolData.name} onChange={e => setSchoolData(prev => ({...prev, name: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" required />
+                          <Input placeholder="Short Alias (GA)" value={schoolData.shortName} onChange={e => setSchoolData(prev => ({...prev, shortName: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Select value={schoolData.ownership} onValueChange={v => setSchoolData({...schoolData, ownership: v})}>
+                          <Select 
+                            value={schoolData.ownership} 
+                            onValueChange={v => {
+                              if (v !== schoolData.ownership) setSchoolData(prev => ({...prev, ownership: v}));
+                            }}
+                          >
                             <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="Private">Private</SelectItem><SelectItem value="Public">Public</SelectItem></SelectContent>
                           </Select>
-                          <Input placeholder="Founded Year" type="number" value={schoolData.foundedYear} onChange={e => setSchoolData({...schoolData, foundedYear: e.target.value})} className="bg-white/3 border-white/10 h-10 rounded-xl" />
+                          <Input placeholder="Founded Year" type="number" value={schoolData.foundedYear} onChange={e => setSchoolData(prev => ({...prev, foundedYear: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" />
                         </div>
                         <div className="space-y-3 pt-3 border-t border-white/5">
                           <Label className="text-[9px] font-semibold uppercase tracking-widest text-primary">Admin Credentials</Label>
@@ -323,11 +327,16 @@ export default function LoginPage() {
 
                       <TabsContent value="academic" className="space-y-4 mt-0">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Select value={schoolData.academicSystem} onValueChange={v => setSchoolData({...schoolData, academicSystem: v})}>
+                          <Select 
+                            value={schoolData.academicSystem} 
+                            onValueChange={v => {
+                              if (v !== schoolData.academicSystem) setSchoolData(prev => ({...prev, academicSystem: v}));
+                            }}
+                          >
                             <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="Term System">Trimesters</SelectItem><SelectItem value="Semester System">Semesters</SelectItem></SelectContent>
                           </Select>
-                          <Input type="number" placeholder="Cycles" value={schoolData.numPeriods} onChange={e => setSchoolData({...schoolData, numPeriods: e.target.value})} className="bg-white/3 border-white/10 h-10 rounded-xl" />
+                          <Input type="number" placeholder="Cycles" value={schoolData.numPeriods} onChange={e => setSchoolData(prev => ({...prev, numPeriods: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           {academicLevels.map(lvl => (
@@ -349,13 +358,18 @@ export default function LoginPage() {
                       </TabsContent>
 
                       <TabsContent value="branding" className="space-y-4 mt-0">
-                        <Input placeholder="Motto" value={schoolData.motto} onChange={e => setSchoolData({...schoolData, motto: e.target.value})} className="bg-white/3 border-white/10 h-10 rounded-xl" />
+                        <Input placeholder="Motto" value={schoolData.motto} onChange={e => setSchoolData(prev => ({...prev, motto: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="flex items-center gap-3 bg-white/3 p-2.5 rounded-xl border border-white/10">
-                            <input type="color" value={schoolData.primaryColor} onChange={e => setSchoolData({...schoolData, primaryColor: e.target.value})} className="w-5 h-5 rounded-md bg-transparent border-none cursor-pointer" />
+                            <input type="color" value={schoolData.primaryColor} onChange={e => setSchoolData(prev => ({...prev, primaryColor: e.target.value}))} className="w-5 h-5 rounded-md bg-transparent border-none cursor-pointer" />
                             <span className="text-[9px] font-mono">{schoolData.primaryColor}</span>
                           </div>
-                          <Select value={schoolData.currency} onValueChange={v => setSchoolData({...schoolData, currency: v})}>
+                          <Select 
+                            value={schoolData.currency} 
+                            onValueChange={v => {
+                              if (v !== schoolData.currency) setSchoolData(prev => ({...prev, currency: v}));
+                            }}
+                          >
                             <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="USD">USD ($)</SelectItem><SelectItem value="NGN">NGN (₦)</SelectItem></SelectContent>
                           </Select>
