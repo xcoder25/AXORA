@@ -8,7 +8,25 @@ import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { GraduationCap, Loader2, KeyRound, Users, ShieldCheck, Heart, Sparkles, Globe, Settings2, Wallet, Shield } from 'lucide-react';
+import { 
+  GraduationCap, 
+  Loader2, 
+  KeyRound, 
+  Users, 
+  ShieldCheck, 
+  Heart, 
+  Sparkles, 
+  Globe, 
+  Settings2, 
+  Wallet, 
+  Shield,
+  Camera,
+  Video,
+  ShieldAlert,
+  Bus,
+  Laptop,
+  Box
+} from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -146,14 +164,25 @@ export default function LoginPage() {
     }));
   };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-[#02040a]">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[150px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/5 rounded-full blur-[150px]" />
+  const availableModules = [
+    { id: 'results', label: 'Result Management', icon: Sparkles },
+    { id: 'attendance', label: 'Attendance', icon: Globe },
+    { id: 'ai-attendance', label: 'AI Attendance Recognition', icon: Camera },
+    { id: 'cam-integration', label: 'CAM Integration', icon: Video },
+    { id: 'payroll', label: 'Payroll', icon: Wallet },
+    { id: 'ai-report', label: 'AI Insights', icon: Settings2 },
+    { id: 'exam-proctoring', label: 'AI Exam Proctoring', icon: ShieldAlert },
+    { id: 'fleet', label: 'Fleet Management', icon: Bus },
+    { id: 'e-learning', label: 'E-Learning Core', icon: Laptop },
+    { id: 'inventory', label: 'Inventory & Assets', icon: Box },
+    { id: 'parent-portal', label: 'Parent Engagement', icon: Heart }
+  ];
 
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-transparent">
       <Card className={cn(
         "w-full glass-card animate-in fade-in zoom-in-95 duration-700 relative z-10 transition-all",
-        authMode === 'deploy-institution' ? "max-w-2xl" : "max-w-md"
+        authMode === 'deploy-institution' ? "max-w-xl" : "max-w-md"
       )}>
         <CardHeader className="space-y-3 text-center pb-6">
           <div className="flex justify-center mb-1">
@@ -253,7 +282,7 @@ export default function LoginPage() {
                       <TabsTrigger value="modules" className="text-[8px] font-semibold uppercase tracking-wider">Ops</TabsTrigger>
                     </TabsList>
 
-                    <ScrollArea className="h-[300px] pr-2">
+                    <ScrollArea className="h-[350px] pr-2">
                       <TabsContent value="basic" className="space-y-4 mt-0">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <Input placeholder="School Name" value={schoolData.name} onChange={e => setSchoolData({...schoolData, name: e.target.value})} className="bg-white/3 border-white/10 h-10 rounded-xl" required />
@@ -310,12 +339,7 @@ export default function LoginPage() {
 
                       <TabsContent value="modules" className="space-y-3 mt-0">
                          <div className="grid grid-cols-2 gap-2">
-                            {[
-                              { id: 'results', label: 'Results', icon: Sparkles },
-                              { id: 'attendance', label: 'Attendance', icon: Globe },
-                              { id: 'payroll', label: 'Payroll', icon: Wallet },
-                              { id: 'ai-report', label: 'AI Insights', icon: Settings2 }
-                            ].map(mod => (
+                            {availableModules.map(mod => (
                               <div 
                                 key={mod.id} 
                                 onClick={() => toggleModule(mod.id)}
@@ -327,7 +351,7 @@ export default function LoginPage() {
                                 )}
                               >
                                 <mod.icon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="text-[9px] font-semibold uppercase tracking-wider">{mod.label}</span>
+                                <span className="text-[9px] font-semibold uppercase tracking-wider text-left leading-tight">{mod.label}</span>
                               </div>
                             ))}
                          </div>
