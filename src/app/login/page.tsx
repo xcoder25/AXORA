@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -175,30 +175,30 @@ export default function LoginPage() {
     }
   };
 
-  const updateSchoolField = (field: string, value: any) => {
+  const updateSchoolField = useCallback((field: string, value: any) => {
     setSchoolData(prev => {
       if ((prev as any)[field] === value) return prev;
       return { ...prev, [field]: value };
     });
-  };
+  }, []);
 
-  const toggleModule = (mod: string) => {
+  const toggleModule = useCallback((mod: string) => {
     setSchoolData(prev => ({
       ...prev,
       modules: prev.modules.includes(mod) 
         ? prev.modules.filter(m => m !== mod) 
         : [...prev.modules, mod]
     }));
-  };
+  }, []);
 
-  const toggleLevel = (lvl: string) => {
+  const toggleLevel = useCallback((lvl: string) => {
     setSchoolData(prev => ({
       ...prev,
       levels: prev.levels.includes(lvl)
         ? prev.levels.filter(l => l !== lvl)
         : [...prev.levels, lvl]
     }));
-  };
+  }, []);
 
   const availableModules = [
     { id: 'results', label: 'Result Management', icon: Sparkles },
