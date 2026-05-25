@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, CheckCircle2, AlertCircle, FileText, Send, Sparkles } from "lucide-react"
+import { Loader2, CheckCircle2, AlertCircle, FileText, Sparkles } from "lucide-react"
 
 export default function GradingAssistantPage() {
   const [loading, setLoading] = useState(false)
@@ -43,48 +43,48 @@ export default function GradingAssistantPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full">
       <div className="flex flex-col gap-2">
-        <h2 className="font-headline text-4xl font-extrabold text-foreground tracking-tight">AI Grading Assistant</h2>
-        <p className="text-muted-foreground text-lg">Semantic analysis and logic evaluation for written assignments.</p>
+        <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground tracking-tight">AI Grading Assistant</h2>
+        <p className="text-muted-foreground text-sm md:text-lg">Semantic analysis and logic evaluation for written assignments.</p>
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-5">
-        <div className="lg:col-span-2">
-          <form onSubmit={handleGrade} className="space-y-6 h-full">
-            <Card className="border-none shadow-xl h-full flex flex-col">
-              <CardHeader className="bg-primary text-primary-foreground rounded-t-2xl">
-                <CardTitle className="font-headline">Input Data</CardTitle>
-                <CardDescription className="text-primary-foreground/70">Context and student work for analysis.</CardDescription>
+      <div className="grid gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-5 xl:col-span-4">
+          <form onSubmit={handleGrade} className="space-y-6">
+            <Card className="border-none shadow-xl flex flex-col glass-card">
+              <CardHeader className="bg-primary/10 rounded-t-2xl p-6 border-b border-white/5">
+                <CardTitle className="font-headline text-xl text-white">Input Module</CardTitle>
+                <CardDescription className="text-muted-foreground text-xs">Student work for deep analysis.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6 flex-1">
-                <div className="space-y-2">
-                  <Label htmlFor="assignmentPrompt" className="text-sm font-bold uppercase tracking-widest opacity-60">Prompt</Label>
+              <CardContent className="space-y-4 pt-6 p-6">
+                <div className="space-y-1.5">
+                  <Label htmlFor="assignmentPrompt" className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Original Prompt</Label>
                   <Textarea 
                     id="assignmentPrompt" 
                     name="assignmentPrompt" 
-                    placeholder="What was the question?" 
-                    className="min-h-[100px] rounded-xl border-muted bg-muted/20 focus:bg-background transition-all"
+                    placeholder="Context or question..." 
+                    className="min-h-[80px] rounded-xl border-white/10 bg-white/5 focus:bg-white/10 transition-all text-sm"
                     required 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="studentSubmission" className="text-sm font-bold uppercase tracking-widest opacity-60">Student Submission</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="studentSubmission" className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Student Response</Label>
                   <Textarea 
                     id="studentSubmission" 
                     name="studentSubmission" 
                     placeholder="Paste student text here..." 
-                    className="min-h-[350px] rounded-xl border-muted bg-muted/20 focus:bg-background transition-all"
+                    className="min-h-[250px] lg:min-h-[350px] rounded-xl border-white/10 bg-white/5 focus:bg-white/10 transition-all text-sm"
                     required 
                   />
                 </div>
               </CardContent>
-              <CardFooter className="pt-0 p-6">
-                <Button type="submit" className="w-full h-12 rounded-xl text-lg font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]" disabled={loading}>
+              <CardFooter className="p-6 pt-0">
+                <Button type="submit" className="w-full h-11 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.01]" disabled={loading}>
                   {loading ? (
-                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Evaluating...</>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...</>
                   ) : (
-                    <><Sparkles className="mr-2 h-5 w-5" /> Run Analysis</>
+                    <><Sparkles className="mr-2 h-4 w-4" /> Run Semantic Audit</>
                   )}
                 </Button>
               </CardFooter>
@@ -92,65 +92,65 @@ export default function GradingAssistantPage() {
           </form>
         </div>
 
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-7 xl:col-span-8 h-full">
           {!feedback && !loading && (
-            <div className="flex flex-col items-center justify-center h-full min-h-[500px] text-center p-12 border-2 border-dashed rounded-3xl bg-muted/30">
-              <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-6">
-                <FileText className="h-10 w-10 text-muted-foreground/40" />
+            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-12 border-2 border-dashed rounded-3xl bg-white/3 border-white/5">
+              <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                <FileText className="h-8 w-8 text-muted-foreground/30" />
               </div>
-              <h3 className="font-headline text-2xl font-bold">Awaiting Submission</h3>
-              <p className="text-muted-foreground max-w-xs mt-2">Submit an assignment to generate AI-powered semantic insights and feedback.</p>
+              <h3 className="font-headline text-xl font-bold text-white">Awaiting Payload</h3>
+              <p className="text-muted-foreground text-sm max-w-xs mt-2">Submit an assignment to generate AI-powered insights and feedback logs.</p>
             </div>
           )}
 
           {loading && (
-            <div className="flex flex-col items-center justify-center h-full min-h-[500px] space-y-6 bg-muted/10 rounded-3xl border">
+            <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-6 bg-white/3 rounded-3xl border border-white/5">
               <div className="relative">
-                <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                <Sparkles className="h-6 w-6 text-amber-500 absolute top-0 right-0 animate-pulse" />
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <Sparkles className="h-4 w-4 text-accent absolute -top-1 -right-1 animate-pulse" />
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold tracking-tight">ScholAI is thinking...</p>
-                <p className="text-sm text-muted-foreground mt-1">Analyzing context, tone, and logic patterns.</p>
+                <p className="text-lg font-bold tracking-tight text-white">ScholAI is auditng...</p>
+                <p className="text-xs text-muted-foreground mt-1">Analyzing context, tone, and logic patterns.</p>
               </div>
             </div>
           )}
 
           {feedback && (
-            <div className="space-y-6 animate-in zoom-in-95 duration-700">
-              <Card className="border-none shadow-2xl overflow-hidden rounded-3xl">
-                <CardHeader className="flex flex-row items-center justify-between bg-muted/50 pb-6 border-b">
+            <div className="space-y-6 animate-in zoom-in-95 duration-700 h-full">
+              <Card className="border-none shadow-2xl overflow-hidden rounded-3xl glass-card h-full">
+                <CardHeader className="flex flex-row items-center justify-between bg-white/5 pb-6 border-b border-white/5 p-6">
                   <div className="space-y-1">
-                    <CardTitle className="font-headline text-2xl">Analysis Report</CardTitle>
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Final Evaluation</p>
+                    <CardTitle className="font-headline text-xl text-white">Evaluation Report</CardTitle>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold">Semantic Audit Complete</p>
                   </div>
-                  <Badge variant="outline" className={`${getBadgeStyles(feedback.suggestedGradeCategory)} px-5 py-2 text-sm font-black rounded-xl border-2`}>
+                  <Badge variant="outline" className={`${getBadgeStyles(feedback.suggestedGradeCategory)} px-4 py-1.5 text-[10px] font-bold rounded-xl border-2`}>
                     {feedback.suggestedGradeCategory}
                   </Badge>
                 </CardHeader>
-                <CardContent className="space-y-8 pt-8">
-                  <div className="relative pl-6 border-l-4 border-primary/20">
-                    <h4 className="text-xs font-black uppercase tracking-widest mb-3 text-primary flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Executive Summary
+                <CardContent className="space-y-8 pt-8 p-6">
+                  <div className="relative pl-5 border-l-2 border-primary/30">
+                    <h4 className="text-[9px] font-bold uppercase tracking-widest mb-3 text-primary flex items-center gap-2">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Executive Verdict
                     </h4>
-                    <p className="text-lg font-medium leading-relaxed text-foreground/90 italic">
+                    <p className="text-base font-medium leading-relaxed text-white/90 italic">
                       "{feedback.overallFeedback}"
                     </p>
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-xs font-black uppercase tracking-widest mb-3 text-amber-600 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      Improvement Matrix
+                    <h4 className="text-[9px] font-bold uppercase tracking-widest mb-3 text-accent flex items-center gap-2">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      Growth Matrix
                     </h4>
                     <div className="grid gap-3">
                       {feedback.areasForImprovement.map((area, i) => (
-                        <div key={i} className="flex gap-4 p-4 bg-muted/30 rounded-2xl border hover:bg-muted/50 transition-colors group">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background font-bold text-amber-600 shadow-sm border">
+                        <div key={i} className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors group">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-background font-bold text-[10px] text-accent shadow-sm border border-white/5">
                             {i + 1}
                           </span>
-                          <p className="text-sm font-medium leading-relaxed group-hover:text-foreground transition-colors">
+                          <p className="text-xs font-medium leading-relaxed text-muted-foreground group-hover:text-white transition-colors">
                             {area}
                           </p>
                         </div>
@@ -158,9 +158,9 @@ export default function GradingAssistantPage() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="bg-muted/30 p-4 justify-center">
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest text-center">
-                    Verified ScholAI Analysis Outcome
+                <CardFooter className="bg-white/5 p-4 justify-center">
+                  <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest text-center">
+                    Verified ScholAI Analysis Output
                   </p>
                 </CardFooter>
               </Card>
