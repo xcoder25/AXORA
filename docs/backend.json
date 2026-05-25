@@ -10,165 +10,60 @@
         "name": { "type": "string" },
         "shortName": { "type": "string" },
         "type": { "type": "string", "enum": ["Primary", "Secondary", "Nursery", "Tertiary", "Combined"] },
-        "ownership": { "type": "string", "enum": ["Private", "Public"] },
-        "mission": { "type": "string" },
-        "yearEstablished": { "type": "number" },
-        "motto": { "type": "string" },
-        "logoUrl": { "type": "string" },
-        "contact": {
+        "academicRules": {
           "type": "object",
           "properties": {
-            "officialEmail": { "type": "string", "format": "email" },
-            "phone": { "type": "string" },
-            "altPhone": { "type": "string" },
-            "website": { "type": "string" },
-            "social": {
-              "type": "object",
-              "properties": {
-                "facebook": { "type": "string" },
-                "instagram": { "type": "string" },
-                "linkedin": { "type": "string" }
-              }
-            }
+            "gradingSystem": { "type": "string", "enum": ["A-F", "GPA", "Percentages", "Custom"] },
+            "promotionThreshold": { "type": "number", "description": "Minimum average for auto-promotion" }
           }
         },
-        "location": {
-          "type": "object",
-          "properties": {
-            "country": { "type": "string" },
-            "state": { "type": "string" },
-            "city": { "type": "string" },
-            "address": { "type": "string" },
-            "postalCode": { "type": "string" },
-            "timeZone": { "type": "string" }
-          }
-        },
-        "academicStructure": {
-          "type": "object",
-          "properties": {
-            "system": { "type": "string", "enum": ["Term System", "Semester System"] },
-            "count": { "type": "number", "description": "Number of terms or semesters" },
-            "levels": { "type": "array", "items": { "type": "string" } }
-          }
-        },
-        "capacity": {
-          "type": "object",
-          "properties": {
-            "expectedPopulation": { "type": "number" },
-            "currentStudentCount": { "type": "number" },
-            "teacherCount": { "type": "number" },
-            "campusCount": { "type": "number" }
-          }
-        },
-        "branding": {
-          "type": "object",
-          "properties": {
-            "portalName": { "type": "string" },
-            "subdomain": { "type": "string" },
-            "primaryColor": { "type": "string" },
-            "secondaryColor": { "type": "string" }
-          }
-        },
-        "finance": {
+        "financeConfig": {
           "type": "object",
           "properties": {
             "currency": { "type": "string" },
-            "method": { "type": "string" },
-            "gateway": { "type": "string" }
+            "feeCategories": { "type": "array", "items": { "type": "string" } }
           }
         },
-        "security": {
-          "type": "object",
-          "properties": {
-            "twoFactor": { "type": "boolean" },
-            "backupFrequency": { "type": "string", "enum": ["Daily", "Weekly", "Monthly"] }
-          }
-        },
-        "modules": { "type": "array", "items": { "type": "string" } },
-        "adminUid": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "adminUid": { "type": "string" }
       },
       "required": ["id", "name", "adminUid"]
     },
-    "SecurityDevice": {
-      "title": "Security Device",
-      "description": "NVR, DVR, or IP Camera connection configuration.",
+    "FeeRecord": {
+      "title": "Financial Ledger",
+      "description": "Granular fee tracking with splitting and discounts.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "name": { "type": "string" },
-        "type": { "type": "string", "enum": ["Hikvision NVR", "Generic DVR", "IP Camera", "Wireless Hub"] },
-        "ipAddress": { "type": "string" },
-        "port": { "type": "number" },
-        "protocol": { "type": "string", "enum": ["RTSP", "ONVIF", "P2P", "HikConnect"] },
-        "status": { "type": "string", "enum": ["Online", "Offline", "Error"] },
-        "schoolId": { "type": "string" }
-      },
-      "required": ["id", "name", "type", "ipAddress", "schoolId"]
-    },
-    "AttendanceRecord": {
-      "title": "Attendance Record",
-      "description": "Daily attendance logs triggered by AI recognition.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "role": { "type": "string", "enum": ["student", "teacher", "security"] },
-        "schoolId": { "type": "string" },
-        "nodeId": { "type": "string", "description": "Camera ID that performed recognition" },
-        "confidence": { "type": "number" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "userId", "role", "schoolId"]
-    },
-    "Exam": {
-      "title": "CBT Exam",
-      "description": "Computer-based testing configuration.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "subject": { "type": "string" },
-        "duration": { "type": "number", "description": "Minutes" },
-        "status": { "type": "string", "enum": ["Draft", "Published", "Active", "Closed"] },
-        "teacherId": { "type": "string" },
-        "schoolId": { "type": "string" },
-        "startTime": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "title", "subject", "schoolId"]
-    },
-    "Question": {
-      "title": "Exam Question",
-      "description": "Individual question node within an exam.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "examId": { "type": "string" },
-        "type": { "type": "string", "enum": ["Multiple Choice", "True/False", "Short Answer"] },
-        "text": { "type": "string" },
-        "options": { "type": "array", "items": { "type": "string" } },
-        "correctAnswer": { "type": "string" },
-        "points": { "type": "number" }
-      },
-      "required": ["id", "examId", "text", "correctAnswer"]
-    },
-    "ExamSubmission": {
-      "title": "Exam Submission",
-      "description": "Student exam results and proctoring logs.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "examId": { "type": "string" },
         "studentId": { "type": "string" },
-        "answers": { "type": "object" },
-        "score": { "type": "number" },
-        "proctoringFlags": { "type": "array", "items": { "type": "string" } },
-        "status": { "type": "string", "enum": ["In Progress", "Submitted", "Graded"] },
-        "submittedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "examId", "studentId"]
+        "schoolId": { "type": "string" },
+        "splits": {
+          "type": "object",
+          "properties": {
+            "tuition": { "type": "number" },
+            "exams": { "type": "number" },
+            "pta": { "type": "number" },
+            "transport": { "type": "number" }
+          }
+        },
+        "totalDue": { "type": "number" },
+        "amountPaid": { "type": "number" },
+        "discountApplied": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Partial", "Paid", "Overdue"] },
+        "dueDate": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SmartWorkflow": {
+      "title": "Automation Workflow",
+      "description": "If-Then logic for school automation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "trigger": { "type": "string", "enum": ["Absence", "FeeOverdue", "ResultPublished"] },
+        "action": { "type": "string", "enum": ["SMS", "WhatsApp", "Email", "Push"] },
+        "recipient": { "type": "string", "enum": ["Parent", "Student", "Staff"] },
+        "frequency": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      }
     },
     "User": {
       "title": "User Profile",
@@ -182,8 +77,7 @@
         "role": {
           "type": "string",
           "enum": ["admin", "teacher", "student", "parent", "security"]
-        },
-        "createdAt": { "type": "string", "format": "date-time" }
+        }
       },
       "required": ["uid", "email", "role", "schoolId"]
     }
@@ -198,27 +92,15 @@
     },
     "/users/{userId}": {
       "schema": "User",
-      "description": "User profiles with school affiliation."
+      "description": "User profiles."
     },
-    "/securityDevices/{deviceId}": {
-      "schema": "SecurityDevice",
-      "description": "Managed security hardware nodes."
+    "/finance/{recordId}": {
+      "schema": "FeeRecord",
+      "description": "Financial ledger entries."
     },
-    "/attendance/{recordId}": {
-      "schema": "AttendanceRecord",
-      "description": "Global attendance logs."
-    },
-    "/exams/{examId}": {
-      "schema": "Exam",
-      "description": "CBT Exam definitions."
-    },
-    "/exams/{examId}/questions/{questionId}": {
-      "schema": "Question",
-      "description": "Questions linked to an exam."
-    },
-    "/examSubmissions/{submissionId}": {
-      "schema": "ExamSubmission",
-      "description": "Student results and proctoring metadata."
+    "/workflows/{workflowId}": {
+      "schema": "SmartWorkflow",
+      "description": "Automation task definitions."
     }
   }
 }

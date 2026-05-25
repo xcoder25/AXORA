@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -6,7 +7,6 @@ import { usePathname } from "next/navigation"
 import Image from "next/image"
 import { 
   BookOpen, 
-  Calendar, 
   GraduationCap, 
   LayoutDashboard, 
   LineChart, 
@@ -17,10 +17,11 @@ import {
   Wallet,
   Megaphone,
   Camera,
-  ShieldCheck,
   Package,
   Video,
-  ClipboardList
+  ClipboardList,
+  Zap,
+  GanttChartSquare
 } from "lucide-react"
 
 import {
@@ -45,18 +46,18 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Finance", url: "/dashboard/finance", icon: Wallet, roles: ["admin", "parent"] },
+  { title: "Finance Hub", url: "/dashboard/finance", icon: Wallet, roles: ["admin", "parent"] },
+  { title: "Academic Engine", url: "/dashboard/academic", icon: GanttChartSquare, roles: ["admin", "teacher"] },
+  { title: "Workflows", url: "/dashboard/workflows", icon: Zap, roles: ["admin"] },
   { title: "Payroll", url: "/dashboard/payroll", icon: Wallet, roles: ["admin"] },
   { title: "Comms", url: "/dashboard/communication", icon: Megaphone },
-  { title: "Attendance", url: "/dashboard/attendance", icon: Camera, roles: ["admin", "teacher"] },
+  { title: "Identity Matrix", url: "/dashboard/attendance", icon: Camera, roles: ["admin", "teacher"] },
   { title: "Security", url: "/dashboard/security", icon: Video, roles: ["admin"] },
-  { title: "Assets", url: "/dashboard/assets", icon: Package, roles: ["admin"] },
-  { title: "CBT Exams", url: "/dashboard/exams", icon: ClipboardList, roles: ["teacher", "admin", "student"] },
+  { title: "CBT Exams", url: "/dashboard/exams", icon: ClipboardList },
   { title: "Grading", url: "/dashboard/grading", icon: NotebookPen, roles: ["teacher", "admin"] },
   { title: "Courses", url: "/dashboard/courses", icon: BookOpen },
   { title: "Performance", url: "/dashboard/performance", icon: LineChart },
-  { title: "Resources", url: "/dashboard/resources", icon: Sparkles },
-  { title: "Students", url: "/dashboard/registry", icon: Users, roles: ["teacher", "admin"] },
+  { title: "Registry", url: "/dashboard/registry", icon: Users, roles: ["teacher", "admin"] },
 ]
 
 export function DashboardSidebar({ userRole, schoolLogo, schoolName }: { userRole: string; schoolLogo?: string; schoolName?: string; }) {
@@ -80,7 +81,7 @@ export function DashboardSidebar({ userRole, schoolLogo, schoolName }: { userRol
             <span className="font-bold text-base tracking-tight text-white leading-tight truncate">
               {schoolName || "Axora"}
             </span>
-            <span className="text-[8px] font-bold uppercase tracking-widest text-accent">Core Engine</span>
+            <span className="text-[8px] font-bold uppercase tracking-widest text-accent">Node OS</span>
           </div>
         </div>
       </SidebarHeader>
@@ -88,7 +89,7 @@ export function DashboardSidebar({ userRole, schoolLogo, schoolName }: { userRol
       <SidebarContent className="px-3">
         <SidebarGroup>
           <SidebarGroupLabel className="px-4 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/30 mb-2">
-            Management
+            Institutional Core
           </SidebarGroupLabel>
           <SidebarMenu className="gap-1">
             {filteredNavItems.map((item) => (
