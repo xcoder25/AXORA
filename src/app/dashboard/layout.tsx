@@ -35,7 +35,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!authLoading && !profileLoading && (!profile?.schoolId || !schoolLoading)) {
-      const timer = setTimeout(() => setBooting(false), 1500);
+      const timer = setTimeout(() => setBooting(false), 1200);
       return () => clearTimeout(timer);
     }
   }, [authLoading, profileLoading, schoolLoading, profile]);
@@ -51,35 +51,27 @@ export default function DashboardLayout({
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#02040a] relative overflow-hidden">
         <div className="absolute inset-0 bg-primary/5 blur-[120px] rounded-full scale-150" />
-        <div className="relative flex flex-col items-center gap-8 animate-in fade-in zoom-in-95 duration-1000">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-primary/20 blur-2xl group-hover:bg-primary/40 transition-all rounded-full" />
-            <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white shadow-2xl relative">
-              {school?.logoUrl ? (
-                <div className="relative w-16 h-16">
-                  <Image 
-                    src={school.logoUrl} 
-                    alt={school.name} 
-                    fill 
-                    className="object-contain" 
-                  />
-                </div>
-              ) : (
-                <GraduationCap className="h-12 w-12" />
-              )}
-            </div>
+        <div className="relative flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-700">
+          <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white shadow-xl">
+            {school?.logoUrl ? (
+              <div className="relative w-12 h-12">
+                <Image src={school.logoUrl} alt={school.name} fill className="object-contain" />
+              </div>
+            ) : (
+              <GraduationCap className="h-10 w-10" />
+            )}
           </div>
           
           <div className="text-center space-y-2">
-            <h2 className="font-headline text-2xl font-black text-white tracking-tighter">
-              {school?.name || 'ScholAI Enterprise'}
+            <h2 className="font-headline text-2xl font-bold text-white tracking-tight">
+              {school?.name || 'ScholAI'}
             </h2>
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-4">
               <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
                 <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Synchronizing Instance</span>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Initializing</span>
               </div>
-              <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-[0.4em] mt-4">
+              <p className="text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-widest">
                 Powered by <span className="text-white/60">NEXORA</span>
               </p>
             </div>
@@ -91,14 +83,6 @@ export default function DashboardLayout({
 
   if (!user) return null;
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'admin': return <ShieldCheck className="h-3 w-3" />;
-      case 'parent': return <Heart className="h-3 w-3" />;
-      default: return <User className="h-3 w-3" />;
-    }
-  };
-
   return (
     <SidebarProvider>
       <DashboardSidebar userRole={profile?.role || 'student'} schoolLogo={school?.logoUrl} schoolName={school?.name} />
@@ -109,27 +93,26 @@ export default function DashboardLayout({
           
           <div className="flex flex-1 items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-accent/10 border border-accent/20">
+              <div className="p-2 rounded-lg bg-accent/10 border border-accent/20">
                 <Building className="h-4 w-4 text-accent" />
               </div>
               <div className="flex flex-col">
-                <span className="font-headline text-sm font-black tracking-tight text-white leading-none">
+                <span className="font-bold text-sm text-white leading-none">
                   {school?.name || 'Loading...'}
                 </span>
-                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                  Portal Node: {profile?.schoolId || 'N/A'}
+                <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest mt-1">
+                  ID: {profile?.schoolId || 'N/A'}
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-6">
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-black text-white uppercase tracking-wider">{profile?.displayName || user.email?.split('@')[0]}</p>
+                <p className="text-xs font-bold text-white uppercase tracking-wider">{profile?.displayName || user.email?.split('@')[0]}</p>
                 <div className={cn(
-                  "flex items-center justify-end gap-1 text-[10px] font-bold uppercase",
+                  "flex items-center justify-end gap-1 text-[9px] font-semibold uppercase tracking-wider",
                   profile?.role === 'parent' ? "text-pink-500" : "text-accent"
                 )}>
-                  {getRoleIcon(profile?.role)}
                   {profile?.role || 'Scholar'}
                 </div>
               </div>
@@ -137,8 +120,7 @@ export default function DashboardLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={handleLogout} 
-                className="hover:bg-red-500/10 hover:text-red-500 transition-colors rounded-xl h-10 w-10 border border-transparent hover:border-red-500/20"
-                title="Secure Sign Out"
+                className="hover:bg-red-500/10 hover:text-red-500 transition-colors rounded-lg h-9 w-9 border border-transparent hover:border-red-500/20"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -147,16 +129,15 @@ export default function DashboardLayout({
         </header>
         <div className="flex flex-1 flex-col gap-4 p-6 md:p-10 relative">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] -z-10" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/3 rounded-full blur-[100px] -z-10" />
           {children}
           
-          <footer className="mt-auto pt-10 pb-4 border-t border-white/5 flex items-center justify-between opacity-30 group hover:opacity-100 transition-opacity">
-             <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          <footer className="mt-auto pt-8 pb-4 border-t border-white/5 flex items-center justify-between opacity-30 hover:opacity-100 transition-opacity">
+             <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
                &copy; {new Date().getFullYear()} {school?.name || 'ScholAI'} Digital Infrastructure
              </p>
              <div className="flex items-center gap-2">
-               <span className="text-[9px] font-black uppercase tracking-[0.4em] text-muted-foreground">System powered by</span>
-               <span className="text-[10px] font-black tracking-tighter text-white">NEXORA</span>
+               <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">System by</span>
+               <span className="text-[10px] font-bold tracking-tight text-white">NEXORA</span>
              </div>
           </footer>
         </div>

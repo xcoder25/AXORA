@@ -48,7 +48,7 @@
     background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline tracking-tighter;
+    @apply font-headline tracking-tight;
   }
 }
 
@@ -57,18 +57,11 @@
     @apply bg-card/40 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.8)];
   }
   .text-glow {
-    text-shadow: 0 0 20px hsl(var(--primary) / 0.6);
+    text-shadow: 0 0 15px hsl(var(--primary) / 0.5);
   }
   .animate-in {
-    animation-duration: 800ms;
+    animation-duration: 600ms;
     animation-fill-mode: both;
     animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .premium-gradient {
-    @apply bg-gradient-to-br from-primary via-primary/80 to-indigo-700;
-  }
-  .nexora-logo {
-    @apply font-black tracking-tighter text-white;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
   }
 }
