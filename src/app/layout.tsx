@@ -1,10 +1,11 @@
-import type {Metadata} from 'next';
-import './globals.css';
 
-export const metadata: Metadata = {
-  title: 'ScholAI - Intelligent School Management',
-  description: 'A super intelligent features school management system powered by AI.',
-};
+'use client';
+
+import type { Metadata } from 'next';
+import './globals.css';
+import { initializeFirebase, FirebaseClientProvider } from '@/firebase';
+
+const { firebaseApp, firestore, auth } = initializeFirebase();
 
 export default function RootLayout({
   children,
@@ -18,7 +19,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Literata:opsz,wght@7..72,200..900&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased">{children}</body>
+      <body className="font-body antialiased">
+        <FirebaseClientProvider firebaseApp={firebaseApp} firestore={firestore} auth={auth}>
+          {children}
+        </FirebaseClientProvider>
+      </body>
     </html>
   );
 }

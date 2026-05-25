@@ -1,0 +1,44 @@
+
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user information and roles for access control.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User's email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's full name."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["teacher", "student"],
+          "description": "The user's role in the system."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles stored by their unique auth ID."
+    }
+  }
+}

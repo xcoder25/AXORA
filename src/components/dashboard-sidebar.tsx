@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -31,7 +32,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-const navItems = [
+interface NavItem {
+  title: string;
+  url: string;
+  icon: any;
+  roles?: string[];
+}
+
+const navItems: NavItem[] = [
   {
     title: "Overview",
     url: "/dashboard",
@@ -41,16 +49,19 @@ const navItems = [
     title: "Study Planner",
     url: "/dashboard/planner",
     icon: Calendar,
+    roles: ["student"],
   },
   {
     title: "Grading Assistant",
     url: "/dashboard/grading",
     icon: NotebookPen,
+    roles: ["teacher"],
   },
   {
     title: "Course Registry",
     url: "/dashboard/courses",
     icon: BookOpen,
+    roles: ["teacher"],
   },
   {
     title: "Performance",
@@ -61,17 +72,23 @@ const navItems = [
     title: "Resource Generator",
     url: "/dashboard/resources",
     icon: Sparkles,
+    roles: ["teacher"],
   },
   {
     title: "Student Registry",
     url: "/dashboard/registry",
     icon: Users,
+    roles: ["teacher"],
   },
 ]
 
-export function DashboardSidebar() {
+export function DashboardSidebar({ userRole }: { userRole: string }) {
   const pathname = usePathname()
   
+  const filteredNavItems = navItems.filter(item => 
+    !item.roles || item.roles.includes(userRole)
+  );
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b px-4 py-4">
@@ -88,7 +105,7 @@ export function DashboardSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
           <SidebarMenu>
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton 
                   asChild 
