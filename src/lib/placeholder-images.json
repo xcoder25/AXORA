@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Scholarly background with library or modern school aesthetic",
+      "imageUrl": "https://picsum.photos/seed/scholai-hero/1200/800",
+      "imageHint": "library university"
+    },
+    {
+      "id": "student-avatar",
+      "description": "Default student avatar",
+      "imageUrl": "https://picsum.photos/seed/student/200/200",
+      "imageHint": "student portrait"
+    }
+  ]
 }

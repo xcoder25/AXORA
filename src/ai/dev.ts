@@ -1,1 +1,6 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/generate-study-resources-from-syllabus.ts';
+import '@/ai/flows/provide-automated-assignment-feedback-flow.ts';
+import '@/ai/flows/generate-personalized-study-plan.ts';
