@@ -14,10 +14,12 @@ import {
   Settings, 
   Sparkles, 
   Users,
-  ShieldAlert,
   Wallet,
   Megaphone,
-  ChevronRight
+  Camera,
+  ShieldCheck,
+  Package,
+  Video
 } from "lucide-react"
 
 import {
@@ -43,8 +45,11 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "Finance", url: "/dashboard/finance", icon: Wallet, roles: ["admin", "parent"] },
+  { title: "Payroll", url: "/dashboard/payroll", icon: Wallet, roles: ["admin"] },
   { title: "Comms", url: "/dashboard/communication", icon: Megaphone },
-  { title: "Study Plan", url: "/dashboard/planner", icon: Calendar, roles: ["student", "admin", "parent"] },
+  { title: "Attendance", url: "/dashboard/attendance", icon: Camera, roles: ["admin", "teacher"] },
+  { title: "Security", url: "/dashboard/security", icon: Video, roles: ["admin"] },
+  { title: "Assets", url: "/dashboard/assets", icon: Package, roles: ["admin"] },
   { title: "Grading", url: "/dashboard/grading", icon: NotebookPen, roles: ["teacher", "admin"] },
   { title: "Courses", url: "/dashboard/courses", icon: BookOpen },
   { title: "Performance", url: "/dashboard/performance", icon: LineChart },
@@ -62,7 +67,9 @@ export function DashboardSidebar({ userRole, schoolLogo, schoolName }: { userRol
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white shadow-lg relative overflow-hidden group">
             {schoolLogo ? (
-              <Image src={schoolLogo} alt={schoolName || "Logo"} fill className="object-contain p-2" />
+              <div className="relative w-full h-full p-2">
+                <Image src={schoolLogo} alt={schoolName || "Logo"} fill className="object-contain" />
+              </div>
             ) : (
               <GraduationCap className="h-5 w-5" />
             )}
