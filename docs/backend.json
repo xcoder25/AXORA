@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "School": {
@@ -9,12 +8,13 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "shortName": { "type": "string" },
+        "logoUrl": { "type": "string" },
         "type": { "type": "string", "enum": ["Primary", "Secondary", "Nursery", "Tertiary", "Combined"] },
         "academicRules": {
           "type": "object",
           "properties": {
             "gradingSystem": { "type": "string", "enum": ["A-F", "GPA", "Percentages", "Custom"] },
-            "promotionThreshold": { "type": "number", "description": "Minimum average for auto-promotion" }
+            "promotionThreshold": { "type": "number" }
           }
         },
         "financeConfig": {
@@ -28,43 +28,6 @@
       },
       "required": ["id", "name", "adminUid"]
     },
-    "FeeRecord": {
-      "title": "Financial Ledger",
-      "description": "Granular fee tracking with splitting and discounts.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "studentId": { "type": "string" },
-        "schoolId": { "type": "string" },
-        "splits": {
-          "type": "object",
-          "properties": {
-            "tuition": { "type": "number" },
-            "exams": { "type": "number" },
-            "pta": { "type": "number" },
-            "transport": { "type": "number" }
-          }
-        },
-        "totalDue": { "type": "number" },
-        "amountPaid": { "type": "number" },
-        "discountApplied": { "type": "number" },
-        "status": { "type": "string", "enum": ["Pending", "Partial", "Paid", "Overdue"] },
-        "dueDate": { "type": "string", "format": "date-time" }
-      }
-    },
-    "SmartWorkflow": {
-      "title": "Automation Workflow",
-      "description": "If-Then logic for school automation.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "trigger": { "type": "string", "enum": ["Absence", "FeeOverdue", "ResultPublished"] },
-        "action": { "type": "string", "enum": ["SMS", "WhatsApp", "Email", "Push"] },
-        "recipient": { "type": "string", "enum": ["Parent", "Student", "Staff"] },
-        "frequency": { "type": "string" },
-        "isActive": { "type": "boolean" }
-      }
-    },
     "User": {
       "title": "User Profile",
       "description": "Stores user information, school affiliation, and roles.",
@@ -77,9 +40,82 @@
         "role": {
           "type": "string",
           "enum": ["admin", "teacher", "student", "parent", "security"]
-        }
+        },
+        "gpa": { "type": "number" },
+        "major": { "type": "string" },
+        "status": { "type": "string" }
       },
       "required": ["uid", "email", "role", "schoolId"]
+    },
+    "AttendanceRecord": {
+      "title": "Identity Matrix Log",
+      "description": "Real-time neural recognition events.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "role": { "type": "string" },
+        "nodeId": { "type": "string" },
+        "confidence": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "schoolId": { "type": "string" }
+      }
+    },
+    "FeeRecord": {
+      "title": "Financial Ledger",
+      "description": "Granular fee tracking.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "tuition": { "type": "number" },
+        "pta": { "type": "number" },
+        "transport": { "type": "number" },
+        "totalDue": { "type": "number" },
+        "amountPaid": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Partial", "Paid", "Overdue"] },
+        "lastPaymentDate": { "type": "string" }
+      }
+    },
+    "Exam": {
+      "title": "Assessment Node",
+      "description": "CBT Exam definitions.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "duration": { "type": "number" },
+        "status": { "type": "string", "enum": ["Draft", "Published", "Active", "Closed"] },
+        "schoolId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "SmartWorkflow": {
+      "title": "Automation Workflow",
+      "description": "If-Then logic for school automation.",
+      "type": "object",
+      "properties": {
+        "trigger": { "type": "string" },
+        "action": { "type": "string" },
+        "via": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "frequency": { "type": "string" },
+        "schoolId": { "type": "string" }
+      }
+    },
+    "Announcement": {
+      "title": "Broadcast Message",
+      "description": "Campus-wide communications.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "sender": { "type": "string" },
+        "targetRole": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -94,13 +130,25 @@
       "schema": "User",
       "description": "User profiles."
     },
+    "/attendance/{recordId}": {
+      "schema": "AttendanceRecord",
+      "description": "Neural identity logs."
+    },
     "/finance/{recordId}": {
       "schema": "FeeRecord",
-      "description": "Financial ledger entries."
+      "description": "Financial ledger."
+    },
+    "/exams/{examId}": {
+      "schema": "Exam",
+      "description": "Exam definitions."
     },
     "/workflows/{workflowId}": {
       "schema": "SmartWorkflow",
-      "description": "Automation task definitions."
+      "description": "Automation triggers."
+    },
+    "/announcements/{annId}": {
+      "schema": "Announcement",
+      "description": "Broadcast history."
     }
   }
 }

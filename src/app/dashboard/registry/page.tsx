@@ -14,26 +14,32 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Search, Plus, Filter, MoreHorizontal, User } from "lucide-react"
-
-const students = [
-  { id: "STU001", name: "Alex Johnson", email: "alex.j@scholai.edu", major: "Physics", status: "Active", gpa: "3.8" },
-  { id: "STU002", name: "Sarah Williams", email: "sarah.w@scholai.edu", major: "Computer Science", status: "Active", gpa: "3.9" },
-  { id: "STU003", name: "Michael Chen", email: "m.chen@scholai.edu", major: "Mathematics", status: "On Leave", gpa: "3.5" },
-  { id: "STU004", name: "Elena Rodriguez", email: "e.rod@scholai.edu", major: "Biochemistry", status: "Active", gpa: "3.7" },
-  { id: "STU005", name: "James Wilson", email: "j.wilson@scholai.edu", major: "Engineering", status: "Active", gpa: "3.6" },
-  { id: "STU006", name: "Emma Brown", email: "emma.b@scholai.edu", major: "Literature", status: "Active", gpa: "4.0" },
-]
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, query, where, orderBy } from "firebase/firestore"
 
 export default function StudentRegistryPage() {
   const [searchTerm, setSearchTerm] = useState("")
+  const db = useFirestore()
 
-  const filteredStudents = students.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const studentsQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    // Real-time query for student users in this school
+    return query(
+      collection(db, 'users'),
+      where('role', '==', 'student'),
+      where('schoolId', '==', 'INST-001') // Mock ID
+    );
+  }, [db]);
+
+  const { data: students, loading } = useCollection(studentsQuery);
+
+  const filteredStudents = students?.filter(s => 
+    s.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    s.uid?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="font-headline text-3xl font-bold text-primary">Student Data Registry</h2>
@@ -51,18 +57,18 @@ export default function StudentRegistryPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="glass-card border-none">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Academic Records</CardTitle>
-              <CardDescription>Managing {students.length} enrolled students.</CardDescription>
+              <CardTitle className="text-white">Academic Records</CardTitle>
+              <CardDescription>Managing {students?.length || 0} enrolled students.</CardDescription>
             </div>
             <div className="relative w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Search by name or ID..." 
-                className="pl-9"
+                className="pl-9 bg-white/5 border-white/10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -71,45 +77,45 @@ export default function StudentRegistryPage() {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>ID</TableHead>
-                <TableHead>Major</TableHead>
-                <TableHead>GPA</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+            <TableHeader className="bg-white/5">
+              <TableRow className="border-white/10">
+                <TableHead className="text-white/60">Student</TableHead>
+                <TableHead className="text-white/60">ID</TableHead>
+                <TableHead className="text-white/60">Major</TableHead>
+                <TableHead className="text-white/60">GPA</TableHead>
+                <TableHead className="text-white/60">Status</TableHead>
+                <TableHead className="text-right text-white/60">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredStudents.map((student) => (
-                <TableRow key={student.id}>
+              {filteredStudents?.map((student) => (
+                <TableRow key={student.uid} className="border-white/5 hover:bg-white/3 transition-colors">
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
                         <User className="h-4 w-4 text-primary" />
                       </div>
                       <div>
-                        <div className="font-medium">{student.name}</div>
+                        <div className="font-medium text-white">{student.displayName || 'Anonymous'}</div>
                         <div className="text-xs text-muted-foreground">{student.email}</div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{student.id}</TableCell>
-                  <TableCell>{student.major}</TableCell>
+                  <TableCell className="font-mono text-[10px] text-white/40">{student.uid?.slice(0, 8).toUpperCase()}</TableCell>
+                  <TableCell className="text-white/80">{student.major || 'Undeclared'}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 text-white">
                       <div className="h-1.5 w-1.5 rounded-full bg-accent" />
-                      {student.gpa}
+                      {student.gpa || 'N/A'}
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={student.status === 'Active' ? 'default' : 'secondary'} className="text-[10px] uppercase tracking-wider">
-                      {student.status}
+                      {student.status || 'Active'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-white">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -117,6 +123,12 @@ export default function StudentRegistryPage() {
               ))}
             </TableBody>
           </Table>
+          {loading && (
+             <div className="py-20 flex flex-col items-center justify-center gap-4 opacity-50">
+               <Loader2 className="h-8 w-8 animate-spin text-primary" />
+               <p className="text-[10px] font-bold uppercase tracking-widest">Synchronizing Node Data...</p>
+             </div>
+          )}
         </CardContent>
       </Card>
     </div>

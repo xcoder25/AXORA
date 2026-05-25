@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Camera, Sparkles, Loader2, Scan, RefreshCcw, ShieldCheck, Briefcase, GraduationCap, Zap, Activity, Cpu, Eye } from "lucide-react"
+import { Camera, Loader2, ShieldCheck, Briefcase, GraduationCap, Zap, Activity, Cpu, Eye, RefreshCcw } from "lucide-react"
 import { recognizeAttendance } from "@/ai/flows/ai-attendance-recognition"
-import { useFirestore, useUser } from "@/firebase"
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase"
+import { doc, setDoc, serverTimestamp, collection, query, where, orderBy, limit } from "firebase/firestore"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function AttendancePage() {
   const [loading, setLoading] = useState(false)
@@ -16,6 +17,19 @@ export default function AttendancePage() {
   const [activeCam, setActiveCam] = useState("Camera_Node_04")
   const { user } = useUser()
   const db = useFirestore()
+
+  // Real-time listener for recent identity matches
+  const recentAttendanceQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(
+      collection(db, 'attendance'),
+      where('schoolId', '==', 'INST-001'), // Mock school ID for now
+      orderBy('timestamp', 'desc'),
+      limit(10)
+    );
+  }, [db]);
+
+  const { data: recentAttendance } = useCollection(recentAttendanceQuery);
 
   const handleScan = async () => {
     setLoading(true)
@@ -28,19 +42,31 @@ export default function AttendancePage() {
       })
       setResult(data)
       
-      if (user && data.identifiedEntities) {
+      if (data.identifiedEntities) {
         data.identifiedEntities.forEach((entity: any) => {
           if (entity.role !== 'unknown') {
-            const recordId = `${entity.id}_${new Date().toISOString().split('T')[0]}`
-            setDoc(doc(db, 'attendance', recordId), {
+            const recordId = `${entity.id}_${Date.now()}`
+            const docRef = doc(db, 'attendance', recordId)
+            const payload = {
               userId: entity.id,
               userName: entity.name,
               role: entity.role,
               schoolId: "INST-001",
               nodeId: activeCam,
               confidence: entity.confidence,
+              status: entity.status,
               timestamp: serverTimestamp()
-            }, { merge: true })
+            }
+
+            setDoc(docRef, payload, { merge: true })
+              .catch(async (err) => {
+                const permissionError = new FirestorePermissionError({
+                  path: docRef.path,
+                  operation: 'write',
+                  requestResourceData: payload,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+              });
           }
         })
       }
@@ -96,21 +122,17 @@ export default function AttendancePage() {
               className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000" 
             />
             
-            {/* Neural HUD Overlay */}
             <div className="absolute inset-0 p-8 pointer-events-none">
               <div className="border border-primary/20 rounded-3xl w-full h-full relative overflow-hidden backdrop-blur-[1px]">
-                {/* Corner Accents */}
                 <div className="absolute top-4 left-4 w-12 h-12 border-t-2 border-l-2 border-primary/60" />
                 <div className="absolute top-4 right-4 w-12 h-12 border-t-2 border-r-2 border-primary/60" />
                 <div className="absolute bottom-4 left-4 w-12 h-12 border-b-2 border-l-2 border-primary/60" />
                 <div className="absolute bottom-4 right-4 w-12 h-12 border-b-2 border-r-2 border-primary/60" />
                 
-                {/* Simulated Scanning Line */}
                 {loading && (
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-80 animate-scan" />
                 )}
 
-                {/* Inference Bounding Boxes */}
                 {result?.identifiedEntities?.map((entity: any, i: number) => (
                   <div 
                     key={i}
@@ -166,64 +188,55 @@ export default function AttendancePage() {
             <CardHeader className="bg-white/3 border-b border-white/5 p-6">
               <div className="flex items-center gap-2 mb-2">
                 <Cpu className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">Inference Matrix</span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">Live Neural Ledger</span>
               </div>
               <CardTitle className="text-xl text-white">Identity Match Ledger</CardTitle>
             </CardHeader>
-            <CardContent className="p-6 flex-1">
-              {!result && !loading ? (
-                <div className="py-24 text-center opacity-30">
-                  <Camera className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Awaiting Neural Data</p>
-                </div>
-              ) : loading ? (
-                <div className="py-24 text-center space-y-6">
-                  <div className="relative w-fit mx-auto">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
-                    <Zap className="h-4 w-4 text-accent absolute -top-1 -right-1 animate-pulse" />
-                  </div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary animate-pulse">Deconstructing Visual Logic...</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {result.identifiedEntities.map((entity: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-white/3 rounded-2xl border border-white/5 hover:bg-white/5 transition-all group">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform">
-                          {getRoleIcon(entity.role)}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-white">{entity.name}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                             <Badge variant="outline" className="text-[8px] border-white/10 text-muted-foreground uppercase">{entity.role}</Badge>
-                             <span className="text-[9px] text-primary font-mono font-bold">{(entity.confidence * 100).toFixed(1)}%</span>
-                          </div>
+            <CardContent className="p-6 flex-1 overflow-y-auto max-h-[500px]">
+              <div className="space-y-3">
+                {recentAttendance?.map((entity: any) => (
+                  <div key={entity.id} className="flex items-center justify-between p-4 bg-white/3 rounded-2xl border border-white/5 hover:bg-white/5 transition-all group">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:scale-105 transition-transform">
+                        {getRoleIcon(entity.role)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white">{entity.userName}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                           <Badge variant="outline" className="text-[8px] border-white/10 text-muted-foreground uppercase">{entity.role}</Badge>
+                           <span className="text-[9px] text-primary font-mono font-bold">{(entity.confidence * 100).toFixed(1)}%</span>
                         </div>
                       </div>
-                      <Badge className={entity.status === 'Present' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-orange-500/10 text-orange-500'}>
-                        {entity.status}
-                      </Badge>
                     </div>
-                  ))}
-                  <div className="mt-8 p-4 rounded-2xl bg-primary/5 border border-primary/10 relative overflow-hidden">
-                    <p className="text-[10px] font-medium italic text-muted-foreground leading-relaxed">
-                      "System Verdict: {result.summary}"
-                    </p>
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-                       <span className="text-[9px] font-bold text-muted-foreground/40 uppercase">Load: {result.neuralLoad}</span>
-                       <span className="text-[9px] font-bold text-muted-foreground/40 uppercase">Latency: 12ms</span>
+                    <div className="text-right">
+                       <Badge className={entity.status === 'Present' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-orange-500/10 text-orange-500'}>
+                         {entity.status}
+                       </Badge>
+                       <p className="text-[7px] text-white/30 uppercase mt-1 font-mono">{entity.timestamp?.toDate()?.toLocaleTimeString()}</p>
                     </div>
                   </div>
-                </div>
-              )}
+                ))}
+                
+                {(!recentAttendance || recentAttendance.length === 0) && !loading && (
+                   <div className="py-24 text-center opacity-30">
+                    <Camera className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Awaiting Neural Data</p>
+                  </div>
+                )}
+
+                {loading && (
+                  <div className="py-24 text-center space-y-6">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary animate-pulse">Scanning Nodes...</p>
+                  </div>
+                )}
+              </div>
             </CardContent>
-            {result && (
-              <CardFooter className="bg-white/3 p-6 border-t border-white/5">
-                <Button className="w-full h-11 rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/10 transition-all active:scale-[0.98]">
-                  Commit Identity Batch to Registry
-                </Button>
-              </CardFooter>
-            )}
+            <CardFooter className="bg-white/3 p-6 border-t border-white/5">
+              <Button variant="ghost" className="w-full h-11 rounded-xl font-bold uppercase tracking-widest text-[9px] text-muted-foreground hover:text-white">
+                View Full Audit History
+              </Button>
+            </CardFooter>
           </Card>
         </div>
       </div>
