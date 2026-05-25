@@ -1,4 +1,3 @@
-
 import { config } from 'dotenv';
 config();
 
@@ -8,3 +7,4 @@ import '@/ai/flows/generate-personalized-study-plan.ts';
 import '@/ai/flows/ai-attendance-recognition.ts';
 import '@/ai/flows/ai-exam-proctoring.ts';
 import '@/ai/flows/generate-exam-questions.ts';
+import '@/ai/flows/axora-institutional-intelligence.ts';
