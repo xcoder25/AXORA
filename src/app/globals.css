@@ -89,12 +89,22 @@
   }
 }
 
+@keyframes gold-sweep {
+  0% { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.8; }
+  100% { transform: translateX(200%) skewX(-15deg); opacity: 0; }
+}
+
 @layer utilities {
   .glass-card {
     @apply bg-white/[0.03] backdrop-blur-3xl border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.5)];
   }
   .text-glow {
     text-shadow: 0 0 20px hsl(var(--primary) / 0.6);
+  }
+  .text-gold-glow {
+    text-shadow: 0 0 15px rgba(218, 165, 32, 0.4);
   }
   .premium-gradient {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, #312e81 100%);
@@ -103,5 +113,24 @@
     animation-duration: 800ms;
     animation-fill-mode: both;
     animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .gold-shine-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+  .gold-shine-sweep::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    animation: gold-sweep 3s infinite ease-in-out;
   }
 }

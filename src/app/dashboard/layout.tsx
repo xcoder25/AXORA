@@ -12,6 +12,45 @@ import { signOut } from 'firebase/auth';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
+function AxoraLogo() {
+  return (
+    <div className="relative group">
+      <svg viewBox="0 0 100 100" className="w-32 h-32 drop-shadow-[0_0_20px_rgba(218,165,32,0.3)]">
+        <defs>
+          <linearGradient id="gold-metallic" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#FFD700', stopOpacity: 1 }} />
+            <stop offset="20%" style={{ stopColor: '#FFF8DC', stopOpacity: 1 }} />
+            <stop offset="50%" style={{ stopColor: '#DAA520', stopOpacity: 1 }} />
+            <stop offset="80%" style={{ stopColor: '#FFD700', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: '#B8860B', stopOpacity: 1 }} />
+          </linearGradient>
+          <filter id="gold-glow">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+        
+        {/* Stylized 'A' paths mimicking the uploaded logo shape */}
+        <path 
+          d="M50 15 L85 85 Q70 78 50 78 Q30 78 15 85 Z" 
+          fill="url(#gold-metallic)" 
+          className="animate-in fade-in zoom-in-95 duration-1000"
+        />
+        <path 
+          d="M25 65 Q50 50 75 65" 
+          stroke="url(#gold-metallic)" 
+          strokeWidth="6" 
+          fill="none" 
+          strokeLinecap="round"
+          className="animate-pulse duration-[3000ms]"
+        />
+        <circle cx="50" cy="40" r="2" fill="white" className="animate-ping opacity-20" />
+      </svg>
+      <div className="absolute inset-0 gold-shine-sweep rounded-full pointer-events-none" />
+    </div>
+  );
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -34,7 +73,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!authLoading && !profileLoading && (!profile?.schoolId || !schoolLoading)) {
-      const timer = setTimeout(() => setBooting(false), 1200);
+      const timer = setTimeout(() => setBooting(false), 2500); // Extended for beauty
       return () => clearTimeout(timer);
     }
   }, [authLoading, profileLoading, schoolLoading, profile]);
@@ -48,33 +87,46 @@ export default function DashboardLayout({
 
   if (booting || authLoading || (user && (profileLoading || (profile?.schoolId && schoolLoading)))) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-transparent relative overflow-hidden">
-        <div className="relative flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-700">
-          <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white shadow-2xl">
-            {school?.logoUrl ? (
-              <div className="relative w-12 h-12">
-                <Image src={school.logoUrl} alt={school.name} fill className="object-contain" />
-              </div>
-            ) : (
-              <GraduationCap className="h-10 w-10" />
-            )}
-          </div>
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-black relative overflow-hidden">
+        {/* Atmospheric Splash Elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(218,165,32,0.05)_0%,transparent_70%)] animate-pulse" />
+        
+        <div className="relative flex flex-col items-center gap-10 animate-in fade-in zoom-in-95 duration-1000">
+          <AxoraLogo />
           
-          <div className="text-center space-y-2">
-            <h2 className="font-headline text-2xl font-bold text-white tracking-tight">
-              {school?.name || 'Axora'}
-            </h2>
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Initializing Portal</span>
-              </div>
-              <p className="text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-widest">
-                powered by <span className="text-white/60">NEXORA</span>
+          <div className="text-center space-y-6">
+            <div className="space-y-1">
+              <h2 className="font-headline text-5xl font-bold tracking-[0.25em] text-white text-gold-glow uppercase">
+                AXORA
+              </h2>
+              <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-muted-foreground/60">
+                Institutional OS
               </p>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
+                <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Synchronizing Neural Nodes
+                </span>
+              </div>
+              
+              <div className="mt-12 flex flex-col items-center gap-1">
+                <p className="text-[8px] font-bold text-muted-foreground/30 uppercase tracking-[0.3em]">
+                  powered by
+                </p>
+                <span className="text-[11px] font-bold tracking-widest text-white/40 uppercase">
+                  NEXORA
+                </span>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Ambient light flares */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/5 blur-[120px] rounded-full pointer-events-none animate-pulse delay-700" />
       </div>
     );
   }
