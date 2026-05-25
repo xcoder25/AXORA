@@ -90,6 +90,22 @@
       },
       "required": ["id", "name", "adminUid"]
     },
+    "SecurityDevice": {
+      "title": "Security Device",
+      "description": "NVR, DVR, or IP Camera connection configuration.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["Hikvision NVR", "Generic DVR", "IP Camera", "Wireless Hub"] },
+        "ipAddress": { "type": "string" },
+        "port": { "type": "number" },
+        "protocol": { "type": "string", "enum": ["RTSP", "ONVIF", "P2P", "HikConnect"] },
+        "status": { "type": "string", "enum": ["Online", "Offline", "Error"] },
+        "schoolId": { "type": "string" }
+      },
+      "required": ["id", "name", "type", "ipAddress", "schoolId"]
+    },
     "User": {
       "title": "User Profile",
       "description": "Stores user information, school affiliation, and roles.",
@@ -106,49 +122,6 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email", "role", "schoolId"]
-    },
-    "Fee": {
-      "title": "Fee Structure",
-      "description": "Defines cost categories for the institution.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "amount": { "type": "number" },
-        "description": { "type": "string" },
-        "schoolId": { "type": "string" }
-      },
-      "required": ["id", "name", "amount", "schoolId"]
-    },
-    "Invoice": {
-      "title": "Student Invoice",
-      "description": "Financial record for a specific student.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "studentUid": { "type": "string" },
-        "feeName": { "type": "string" },
-        "amount": { "type": "number" },
-        "status": { "type": "string", "enum": ["paid", "outstanding", "overdue"] },
-        "dueDate": { "type": "string", "format": "date" },
-        "schoolId": { "type": "string" }
-      },
-      "required": ["id", "studentUid", "amount", "status", "schoolId"]
-    },
-    "Announcement": {
-      "title": "Campus Announcement",
-      "description": "Institutional broadcast message.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "senderUid": { "type": "string" },
-        "targetRole": { "type": "string" },
-        "schoolId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "title", "content", "schoolId"]
     }
   },
   "auth": {
@@ -163,17 +136,9 @@
       "schema": "User",
       "description": "User profiles with school affiliation."
     },
-    "/fees/{feeId}": {
-      "schema": "Fee",
-      "description": "School fee categories."
-    },
-    "/invoices/{invoiceId}": {
-      "schema": "Invoice",
-      "description": "Financial transactions."
-    },
-    "/announcements/{announcementId}": {
-      "schema": "Announcement",
-      "description": "Broadcasting data."
+    "/securityDevices/{deviceId}": {
+      "schema": "SecurityDevice",
+      "description": "Managed security hardware nodes."
     }
   }
 }
