@@ -106,6 +106,22 @@
       },
       "required": ["id", "name", "type", "ipAddress", "schoolId"]
     },
+    "AttendanceRecord": {
+      "title": "Attendance Record",
+      "description": "Daily attendance logs triggered by AI recognition.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "teacher", "security"] },
+        "schoolId": { "type": "string" },
+        "nodeId": { "type": "string", "description": "Camera ID that performed recognition" },
+        "confidence": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "role", "schoolId"]
+    },
     "User": {
       "title": "User Profile",
       "description": "Stores user information, school affiliation, and roles.",
@@ -117,7 +133,7 @@
         "schoolId": { "type": "string" },
         "role": {
           "type": "string",
-          "enum": ["admin", "teacher", "student", "parent"]
+          "enum": ["admin", "teacher", "student", "parent", "security"]
         },
         "createdAt": { "type": "string", "format": "date-time" }
       },
@@ -139,6 +155,10 @@
     "/securityDevices/{deviceId}": {
       "schema": "SecurityDevice",
       "description": "Managed security hardware nodes."
+    },
+    "/attendance/{recordId}": {
+      "schema": "AttendanceRecord",
+      "description": "Global attendance logs."
     }
   }
 }
