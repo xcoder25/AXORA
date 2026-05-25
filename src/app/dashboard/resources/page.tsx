@@ -2,21 +2,25 @@
 
 import { useState } from "react"
 import { generateStudyResourcesFromSyllabus, type GenerateStudyResourcesFromSyllabusOutput } from "@/ai/flows/generate-study-resources-from-syllabus"
+import { synthesizeAxoraVoice } from "@/ai/flows/axora-voice-flow"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, BookOpen, PenTool, Sparkles, FileText, CheckCircle } from "lucide-react"
+import { Loader2, BookOpen, PenTool, Sparkles, FileText, CheckCircle, Volume2 } from "lucide-react"
 
 export default function ResourceGeneratorPage() {
   const [loading, setLoading] = useState(false)
+  const [voicing, setVocalizing] = useState(false)
   const [resources, setResources] = useState<GenerateStudyResourcesFromSyllabusOutput | null>(null)
   const [activeTab, setActiveTab] = useState("summary")
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
 
   async function handleGenerate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
+    setAudioUrl(null)
     const formData = new FormData(e.currentTarget)
     
     try {
@@ -29,6 +33,19 @@ export default function ResourceGeneratorPage() {
       console.error(error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleVocalize() {
+    if (!resources?.summary) return
+    setVocalizing(true)
+    try {
+      const { media } = await synthesizeAxoraVoice(resources.summary)
+      setAudioUrl(media)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setVocalizing(false)
     }
   }
 
@@ -90,59 +107,81 @@ export default function ResourceGeneratorPage() {
 
           {resources && (
             <div className="space-y-6 animate-in zoom-in-95 duration-500">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 glass-card p-1 rounded-2xl h-12 border-white/5">
-                  <TabsTrigger value="summary" className="rounded-xl font-bold uppercase tracking-widest text-[9px] data-[state=active]:bg-primary">
-                    <FileText className="h-3.5 w-3.5 mr-2" />
-                    Logic Summary
-                  </TabsTrigger>
-                  <TabsTrigger value="quiz" className="rounded-xl font-bold uppercase tracking-widest text-[9px] data-[state=active]:bg-primary">
-                    <PenTool className="h-3.5 w-3.5 mr-2" />
-                    Practice Nodes
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="summary" className="mt-6">
-                  <Card className="glass-card border-none overflow-hidden">
-                    <CardHeader className="p-8 border-b border-white/5 bg-white/3">
-                      <CardTitle className="font-headline text-2xl text-white">Strategic Summary</CardTitle>
-                      <CardDescription className="text-xs text-muted-foreground">Key objectives and assessment logic extracted.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-8">
-                      <div className="prose prose-invert prose-sm max-w-none text-white/80 leading-relaxed whitespace-pre-wrap text-sm">
-                        {resources.summary}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="quiz" className="mt-6 space-y-6">
-                  {resources.quizzes.map((q, idx) => (
-                    <Card key={idx} className="glass-card border-none overflow-hidden">
-                      <div className="bg-primary/10 px-6 py-2.5 border-b border-white/5">
-                        <span className="text-[9px] font-bold text-primary uppercase tracking-[0.2em]">Node {idx + 1}</span>
-                      </div>
-                      <CardHeader className="p-6">
-                        <CardTitle className="text-base font-bold text-white leading-snug">{q.question}</CardTitle>
+              <div className="flex justify-between items-center mb-2 px-2">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 glass-card p-1 rounded-2xl h-12 border-white/5">
+                    <TabsTrigger value="summary" className="rounded-xl font-bold uppercase tracking-widest text-[9px] data-[state=active]:bg-primary">
+                      <FileText className="h-3.5 w-3.5 mr-2" />
+                      Logic Summary
+                    </TabsTrigger>
+                    <TabsTrigger value="quiz" className="rounded-xl font-bold uppercase tracking-widest text-[9px] data-[state=active]:bg-primary">
+                      <PenTool className="h-3.5 w-3.5 mr-2" />
+                      Practice Nodes
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="summary" className="mt-6">
+                    <Card className="glass-card border-none overflow-hidden">
+                      <CardHeader className="p-8 border-b border-white/5 bg-white/3 flex flex-row items-center justify-between">
+                        <div>
+                          <CardTitle className="font-headline text-2xl text-white">Strategic Summary</CardTitle>
+                          <CardDescription className="text-xs text-muted-foreground">Key objectives and assessment logic extracted.</CardDescription>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleVocalize} 
+                          disabled={voicing}
+                          className="rounded-xl border-primary/20 bg-primary/5 text-primary font-bold text-[9px] uppercase tracking-widest h-9"
+                        >
+                          {voicing ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> : <Volume2 className="h-3.5 w-3.5 mr-2" />}
+                          Axora Neural Voice
+                        </Button>
                       </CardHeader>
-                      <CardContent className="p-6 pt-0 space-y-3">
-                        <div className="grid gap-2">
-                          {q.options.map((opt, oIdx) => (
-                            <div 
-                              key={oIdx} 
-                              className={`p-3.5 rounded-xl border text-xs flex items-center justify-between transition-all
-                                ${opt === q.correctAnswer ? 'bg-accent/10 border-accent/30 text-accent font-semibold' : 'bg-white/3 border-white/5 hover:bg-white/8'}`}
-                            >
-                              {opt}
-                              {opt === q.correctAnswer && <CheckCircle className="h-3.5 w-3.5 text-accent" />}
-                            </div>
-                          ))}
+                      <CardContent className="p-8">
+                        {audioUrl && (
+                          <div className="mb-6 p-4 rounded-2xl bg-primary/5 border border-primary/10 animate-in slide-in-from-top-2">
+                            <p className="text-[9px] font-bold text-primary uppercase tracking-[0.2em] mb-2">Neural Vocal Stream Active</p>
+                            <audio controls className="w-full h-8 opacity-80 filter invert grayscale">
+                              <source src={audioUrl} type="audio/wav" />
+                            </audio>
+                          </div>
+                        )}
+                        <div className="prose prose-invert prose-sm max-w-none text-white/80 leading-relaxed whitespace-pre-wrap text-sm">
+                          {resources.summary}
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
-                </TabsContent>
-              </Tabs>
+                  </TabsContent>
+
+                  <TabsContent value="quiz" className="mt-6 space-y-6">
+                    {resources.quizzes.map((q, idx) => (
+                      <Card key={idx} className="glass-card border-none overflow-hidden">
+                        <div className="bg-primary/10 px-6 py-2.5 border-b border-white/5">
+                          <span className="text-[9px] font-bold text-primary uppercase tracking-[0.2em]">Node {idx + 1}</span>
+                        </div>
+                        <CardHeader className="p-6">
+                          <CardTitle className="text-base font-bold text-white leading-snug">{q.question}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 pt-0 space-y-3">
+                          <div className="grid gap-2">
+                            {q.options.map((opt, oIdx) => (
+                              <div 
+                                key={oIdx} 
+                                className={`p-3.5 rounded-xl border text-xs flex items-center justify-between transition-all
+                                  ${opt === q.correctAnswer ? 'bg-accent/10 border-accent/30 text-accent font-semibold' : 'bg-white/3 border-white/5 hover:bg-white/8'}`}
+                              >
+                                {opt}
+                                {opt === q.correctAnswer && <CheckCircle className="h-3.5 w-3.5 text-accent" />}
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </TabsContent>
+                </Tabs>
+              </div>
             </div>
           )}
         </div>

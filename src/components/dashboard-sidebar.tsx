@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -21,7 +20,9 @@ import {
   Video,
   ClipboardList,
   Zap,
-  GanttChartSquare
+  GanttChartSquare,
+  UserCheck,
+  IdCard
 } from "lucide-react"
 
 import {
@@ -52,6 +53,7 @@ const navItems: NavItem[] = [
   { title: "Payroll", url: "/dashboard/payroll", icon: Wallet, roles: ["admin"] },
   { title: "Comms", url: "/dashboard/communication", icon: Megaphone },
   { title: "Identity Matrix", url: "/dashboard/attendance", icon: Camera, roles: ["admin", "teacher"] },
+  { title: "ID Cards", url: "/dashboard/id-cards", icon: IdCard },
   { title: "Security", url: "/dashboard/security", icon: Video, roles: ["admin"] },
   { title: "CBT Exams", url: "/dashboard/exams", icon: ClipboardList },
   { title: "Grading", url: "/dashboard/grading", icon: NotebookPen, roles: ["teacher", "admin"] },
