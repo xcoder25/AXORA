@@ -15,7 +15,9 @@ import {
   Sparkles, 
   Users,
   ShieldAlert,
-  Baby
+  Baby,
+  Wallet,
+  Megaphone
 } from "lucide-react"
 
 import {
@@ -28,7 +30,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 
 interface NavItem {
@@ -51,6 +52,18 @@ const navItems: NavItem[] = [
     roles: ["admin"],
   },
   {
+    title: "Finance & Fees",
+    url: "/dashboard/finance",
+    icon: Wallet,
+    roles: ["admin", "parent"],
+  },
+  {
+    title: "Communication",
+    url: "/dashboard/communication",
+    icon: Megaphone,
+    roles: ["admin", "teacher", "student", "parent"],
+  },
+  {
     title: "Study Planner",
     url: "/dashboard/planner",
     icon: Calendar,
@@ -69,16 +82,10 @@ const navItems: NavItem[] = [
     roles: ["teacher", "admin", "student"],
   },
   {
-    title: "Child Progress",
-    url: "/dashboard/performance",
-    icon: Baby,
-    roles: ["parent"],
-  },
-  {
     title: "Performance",
     url: "/dashboard/performance",
     icon: LineChart,
-    roles: ["teacher", "admin", "student"],
+    roles: ["teacher", "admin", "student", "parent"],
   },
   {
     title: "Resource Engine",
