@@ -70,7 +70,7 @@ export default function DashboardLayout({
                 <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Initializing Portal</span>
               </div>
               <p className="text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-widest">
-                Powered by <span className="text-white/60">NEXORA</span>
+                powered by <span className="text-white/60">NEXORA</span>
               </p>
             </div>
           </div>
@@ -133,7 +133,7 @@ export default function DashboardLayout({
                &copy; {new Date().getFullYear()} {school?.name || 'Axora'} Institutional Node
              </p>
              <div className="flex items-center gap-2">
-               <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Digital Architecture by</span>
+               <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">powered by</span>
                <span className="text-[10px] font-bold tracking-tight text-white">NEXORA</span>
              </div>
           </footer>

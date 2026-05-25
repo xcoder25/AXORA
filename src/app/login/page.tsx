@@ -384,7 +384,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-2 opacity-30 hover:opacity-100 transition-opacity">
             <Shield className="h-2.5 w-2.5 text-muted-foreground" />
             <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
-              SaaS Engine by <span className="text-white">NEXORA</span>
+              powered by <span className="text-white">NEXORA</span>
             </p>
           </div>
         </CardFooter>
