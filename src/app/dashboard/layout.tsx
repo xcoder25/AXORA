@@ -6,7 +6,7 @@ import { useUser, useDoc, useAuth } from '@/firebase';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { Separator } from "@/components/ui/separator"
-import { Loader2, LogOut, Building, User, Sparkles, GraduationCap } from 'lucide-react';
+import { Loader2, LogOut, Building, User, Sparkles, GraduationCap, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
 import { cn } from '@/lib/utils';
@@ -15,38 +15,36 @@ import Image from 'next/image';
 function AxoraLogo() {
   return (
     <div className="relative group">
-      <svg viewBox="0 0 100 100" className="w-32 h-32 drop-shadow-[0_0_20px_rgba(218,165,32,0.3)]">
+      <svg viewBox="0 0 100 100" className="w-32 h-32 drop-shadow-[0_0_30px_rgba(147,51,234,0.4)]">
         <defs>
-          <linearGradient id="gold-metallic" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#FFD700', stopOpacity: 1 }} />
-            <stop offset="20%" style={{ stopColor: '#FFF8DC', stopOpacity: 1 }} />
-            <stop offset="50%" style={{ stopColor: '#DAA520', stopOpacity: 1 }} />
-            <stop offset="80%" style={{ stopColor: '#FFD700', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: '#B8860B', stopOpacity: 1 }} />
+          <linearGradient id="axora-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 1 }} />
+            <stop offset="50%" style={{ stopColor: '#a855f7', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))', stopOpacity: 1 }} />
           </linearGradient>
-          <filter id="gold-glow">
-            <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <filter id="neon-glow">
+            <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
         
-        {/* Stylized 'A' paths mimicking the uploaded logo shape */}
+        {/* Core Logo Path branded to App Colors */}
         <path 
           d="M50 15 L85 85 Q70 78 50 78 Q30 78 15 85 Z" 
-          fill="url(#gold-metallic)" 
+          fill="url(#axora-gradient)" 
           className="animate-in fade-in zoom-in-95 duration-1000"
         />
         <path 
           d="M25 65 Q50 50 75 65" 
-          stroke="url(#gold-metallic)" 
-          strokeWidth="6" 
+          stroke="white" 
+          strokeWidth="4" 
           fill="none" 
           strokeLinecap="round"
-          className="animate-pulse duration-[3000ms]"
+          className="opacity-40 animate-pulse duration-[3000ms]"
         />
-        <circle cx="50" cy="40" r="2" fill="white" className="animate-ping opacity-20" />
+        <circle cx="50" cy="40" r="3" fill="white" className="animate-ping opacity-30" />
       </svg>
-      <div className="absolute inset-0 gold-shine-sweep rounded-full pointer-events-none" />
+      <div className="absolute inset-0 brand-shine-sweep rounded-full pointer-events-none" />
     </div>
   );
 }
@@ -72,11 +70,15 @@ export default function DashboardLayout({
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    // If auth and profile data are ready, wait for exactly 5 seconds to show the splash
-    if (!authLoading && !profileLoading && (!profile?.schoolId || !schoolLoading)) {
-      const timer = setTimeout(() => setBooting(false), 5000); 
-      return () => clearTimeout(timer);
-    }
+    // Show splash screen for exactly 5 seconds on every mount/reload
+    const timer = setTimeout(() => {
+      // Only stop booting once data is also ready, but at least 5s has passed
+      if (!authLoading && !profileLoading && (!profile?.schoolId || !schoolLoading)) {
+        setBooting(false);
+      }
+    }, 5000); 
+    
+    return () => clearTimeout(timer);
   }, [authLoading, profileLoading, schoolLoading, profile]);
 
   const handleLogout = async () => {
@@ -88,46 +90,86 @@ export default function DashboardLayout({
 
   if (booting || authLoading || (user && (profileLoading || (profile?.schoolId && schoolLoading)))) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-black relative overflow-hidden">
-        {/* Atmospheric Splash Elements */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(218,165,32,0.05)_0%,transparent_70%)] animate-pulse" />
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#010206] relative overflow-hidden">
+        {/* Immersive Brand Background */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.08)_0%,transparent_70%)] animate-pulse" />
         
-        <div className="relative flex flex-col items-center gap-10 animate-in fade-in zoom-in-95 duration-1000">
+        {/* Animated Background Layers to match App Theme */}
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none animate-blob" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent/10 blur-[120px] rounded-full pointer-events-none animate-blob animation-delay-2000" />
+        
+        <div className="relative flex flex-col items-center gap-12 animate-in fade-in zoom-in-95 duration-1000 z-10">
           <AxoraLogo />
           
           <div className="text-center space-y-6">
-            <div className="space-y-1">
-              <h2 className="font-headline text-5xl font-bold tracking-[0.25em] text-white text-gold-glow uppercase">
+            <div className="space-y-2">
+              <h2 className="font-headline text-6xl font-black tracking-[0.3em] text-white uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
                 AXORA
               </h2>
-              <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-muted-foreground/60">
-                Institutional OS
-              </p>
+              <div className="flex items-center justify-center gap-3">
+                 <div className="h-px w-8 bg-primary/50" />
+                 <p className="text-[11px] font-bold uppercase tracking-[0.6em] text-primary">
+                   Institutional OS
+                 </p>
+                 <div className="h-px w-8 bg-primary/50" />
+              </div>
             </div>
 
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
-                <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
-                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+            <div className="flex flex-col items-center gap-6">
+              <div className="flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-2xl shadow-2xl">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">
                   Synchronizing Neural Nodes
                 </span>
               </div>
               
-              <div className="mt-12 flex flex-col items-center gap-1">
-                <p className="text-[8px] font-bold text-muted-foreground/30 uppercase tracking-[0.3em]">
+              <div className="mt-16 flex flex-col items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+                <p className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-[0.4em]">
                   powered by
                 </p>
-                <span className="text-[11px] font-bold tracking-widest text-white/40 uppercase">
-                  NEXORA
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black tracking-[0.2em] text-white uppercase">
+                    NEXORA
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Ambient light flares */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/5 blur-[120px] rounded-full pointer-events-none animate-pulse delay-700" />
+        <style jsx>{`
+          @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+          }
+          .animate-blob {
+            animation: blob 7s infinite alternate;
+          }
+          .animation-delay-2000 {
+            animation-delay: 2s;
+          }
+          .brand-shine-sweep::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+              to right,
+              transparent,
+              rgba(255, 255, 255, 0.3),
+              transparent
+            );
+            animation: shine 3s infinite ease-in-out;
+          }
+          @keyframes shine {
+            0% { transform: translateX(-100%) skewX(-15deg); }
+            100% { transform: translateX(200%) skewX(-15deg); }
+          }
+        `}</style>
       </div>
     );
   }
