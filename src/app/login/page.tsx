@@ -114,7 +114,7 @@ export default function LoginPage() {
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { id: 'admin', icon: ShieldCheck, label: 'Admin' },
-                      { id: 'teacher', icon: Users, label: 'Faculty' },
+                      { id: 'teacher', icon: Users, label: 'Teacher' },
                       { id: 'student', icon: GraduationCap, label: 'Scholar' }
                     ].map((role) => (
                       <button
