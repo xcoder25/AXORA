@@ -1,3 +1,4 @@
+
 import { config } from 'dotenv';
 config();
 
@@ -6,3 +7,4 @@ import '@/ai/flows/provide-automated-assignment-feedback-flow.ts';
 import '@/ai/flows/generate-personalized-study-plan.ts';
 import '@/ai/flows/ai-attendance-recognition.ts';
 import '@/ai/flows/ai-exam-proctoring.ts';
+import '@/ai/flows/generate-exam-questions.ts';

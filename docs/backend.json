@@ -122,6 +122,54 @@
       },
       "required": ["id", "userId", "role", "schoolId"]
     },
+    "Exam": {
+      "title": "CBT Exam",
+      "description": "Computer-based testing configuration.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "duration": { "type": "number", "description": "Minutes" },
+        "status": { "type": "string", "enum": ["Draft", "Published", "Active", "Closed"] },
+        "teacherId": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "subject", "schoolId"]
+    },
+    "Question": {
+      "title": "Exam Question",
+      "description": "Individual question node within an exam.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "examId": { "type": "string" },
+        "type": { "type": "string", "enum": ["Multiple Choice", "True/False", "Short Answer"] },
+        "text": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "correctAnswer": { "type": "string" },
+        "points": { "type": "number" }
+      },
+      "required": ["id", "examId", "text", "correctAnswer"]
+    },
+    "ExamSubmission": {
+      "title": "Exam Submission",
+      "description": "Student exam results and proctoring logs.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "examId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "answers": { "type": "object" },
+        "score": { "type": "number" },
+        "proctoringFlags": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["In Progress", "Submitted", "Graded"] },
+        "submittedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "examId", "studentId"]
+    },
     "User": {
       "title": "User Profile",
       "description": "Stores user information, school affiliation, and roles.",
@@ -159,6 +207,18 @@
     "/attendance/{recordId}": {
       "schema": "AttendanceRecord",
       "description": "Global attendance logs."
+    },
+    "/exams/{examId}": {
+      "schema": "Exam",
+      "description": "CBT Exam definitions."
+    },
+    "/exams/{examId}/questions/{questionId}": {
+      "schema": "Question",
+      "description": "Questions linked to an exam."
+    },
+    "/examSubmissions/{submissionId}": {
+      "schema": "ExamSubmission",
+      "description": "Student results and proctoring metadata."
     }
   }
 }

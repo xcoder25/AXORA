@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -19,7 +20,8 @@ import {
   Camera,
   ShieldCheck,
   Package,
-  Video
+  Video,
+  ClipboardList
 } from "lucide-react"
 
 import {
@@ -50,6 +52,7 @@ const navItems: NavItem[] = [
   { title: "Attendance", url: "/dashboard/attendance", icon: Camera, roles: ["admin", "teacher"] },
   { title: "Security", url: "/dashboard/security", icon: Video, roles: ["admin"] },
   { title: "Assets", url: "/dashboard/assets", icon: Package, roles: ["admin"] },
+  { title: "CBT Exams", url: "/dashboard/exams", icon: ClipboardList, roles: ["teacher", "admin", "student"] },
   { title: "Grading", url: "/dashboard/grading", icon: NotebookPen, roles: ["teacher", "admin"] },
   { title: "Courses", url: "/dashboard/courses", icon: BookOpen },
   { title: "Performance", url: "/dashboard/performance", icon: LineChart },
