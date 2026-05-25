@@ -72,8 +72,9 @@ export default function DashboardLayout({
   }, [user, authLoading, router]);
 
   useEffect(() => {
+    // If auth and profile data are ready, wait for exactly 5 seconds to show the splash
     if (!authLoading && !profileLoading && (!profile?.schoolId || !schoolLoading)) {
-      const timer = setTimeout(() => setBooting(false), 2500); // Extended for beauty
+      const timer = setTimeout(() => setBooting(false), 5000); 
       return () => clearTimeout(timer);
     }
   }, [authLoading, profileLoading, schoolLoading, profile]);
