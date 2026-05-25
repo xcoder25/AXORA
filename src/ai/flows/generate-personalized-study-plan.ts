@@ -13,9 +13,9 @@ import {z} from 'genkit';
 const GeneratePersonalizedStudyPlanInputSchema = z.object({
   studentName: z.string().describe('The name of the student.'),
   courseName: z.string().describe('The name of the course or topic for which to generate the study plan.'),
-  learningGoals: z.string().describe('The student\u0027s specific learning goals (e.g., "Pass the exam with an A", "Understand advanced calculus concepts").'),
-  currentGrades: z.string().describe('The student\u0027s current grades or performance snapshot (e.g., "Math: B, Science: C+, English: A").'),
-  learningStyle: z.string().describe('The student\u0027s preferred learning style (e.g., "visual", "auditory", "kinesthetic", "reading/writing").'),
+  learningGoals: z.string().describe('The student\'s specific learning goals (e.g., "Pass the exam with an A", "Understand advanced calculus concepts").'),
+  currentGrades: z.string().describe('The student\'s current grades or performance snapshot (e.g., "Math: B, Science: C+, English: A").'),
+  learningStyle: z.string().describe('The student\'s preferred learning style (e.g., "visual", "auditory", "kinesthetic", "reading/writing").'),
   timeCommitment: z.string().describe('The amount of time the student can commit to studying (e.g., "2 hours per day", "10 hours per week").'),
   areasToImprove: z.string().describe('Specific areas or topics the student needs to improve on (e.g., "Algebra, Geometry", "Essay writing", "Thermodynamics").'),
 });
@@ -24,7 +24,7 @@ export type GeneratePersonalizedStudyPlanInput = z.infer<typeof GeneratePersonal
 const GeneratePersonalizedStudyPlanOutputSchema = z.object({
   planTitle: z.string().describe('A descriptive title for the personalized study plan.'),
   introduction: z.string().describe('A welcoming and encouraging introduction to the study plan.'),
-  goalsSummary: z.string().describe('A summary of the student\u0027s learning goals based on the input.'),
+  goalsSummary: z.string().describe('A summary of the student\'s learning goals based on the input.'),
   weeklySchedule: z.array(z.object({
     week: z.number().describe('The week number in the study plan, starting from 1.'),
     topics: z.array(z.string()).describe('A list of key topics to cover during this week.'),
@@ -46,7 +46,7 @@ const generatePersonalizedStudyPlanPrompt = ai.definePrompt({
   name: 'generatePersonalizedStudyPlanPrompt',
   input: {schema: GeneratePersonalizedStudyPlanInputSchema},
   output: {schema: GeneratePersonalizedStudyPlanOutputSchema},
-  prompt: `You are an intelligent study planner AI named ScholAI. Your task is to create a highly personalized and effective study plan for a student based on their specific needs and goals. You should break down the study into a weekly schedule, suggesting topics, activities, and focusing on areas of improvement.
+  prompt: `You are an intelligent study planner AI named Axora. Your task is to create a highly personalized and effective study plan for a student based on their specific needs and goals. You should break down the study into a weekly schedule, suggesting topics, activities, and focusing on areas of improvement.
 
 Here is the student's information:
 Student Name: {{{studentName}}}

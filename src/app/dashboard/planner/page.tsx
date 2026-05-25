@@ -47,7 +47,7 @@ export default function StudyPlannerPage() {
         <Card className="lg:col-span-5 xl:col-span-4 h-fit glass-card border-none">
           <CardHeader className="bg-primary/10 border-b border-white/5 p-6">
             <CardTitle className="text-xl text-white">Planner Profile</CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">Tell ScholAI about your academic objectives.</CardDescription>
+            <CardDescription className="text-xs text-muted-foreground">Tell Axora about your academic objectives.</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -99,7 +99,7 @@ export default function StudyPlannerPage() {
             <div className="flex flex-col items-center justify-center py-32 space-y-6 bg-white/3 rounded-3xl border border-white/5">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <div className="text-center">
-                <p className="text-lg font-bold text-white">ScholAI is mapping learning nodes...</p>
+                <p className="text-lg font-bold text-white">Axora is mapping learning nodes...</p>
                 <p className="text-xs text-muted-foreground mt-1">Generating optimal path based on style and goals.</p>
               </div>
             </div>

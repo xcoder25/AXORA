@@ -62,7 +62,7 @@ export default function DashboardLayout({
           
           <div className="text-center space-y-2">
             <h2 className="font-headline text-2xl font-bold text-white tracking-tight">
-              {school?.name || 'ScholAI'}
+              {school?.name || 'Axora'}
             </h2>
             <div className="flex flex-col items-center gap-4">
               <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
@@ -130,7 +130,7 @@ export default function DashboardLayout({
           
           <footer className="mt-auto pt-8 pb-4 border-t border-white/5 flex items-center justify-between opacity-40 hover:opacity-100 transition-opacity">
              <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
-               &copy; {new Date().getFullYear()} {school?.name || 'ScholAI'} Institutional Node
+               &copy; {new Date().getFullYear()} {school?.name || 'Axora'} Institutional Node
              </p>
              <div className="flex items-center gap-2">
                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Digital Architecture by</span>

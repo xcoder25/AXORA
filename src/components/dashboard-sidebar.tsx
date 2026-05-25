@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -79,7 +78,7 @@ export function DashboardSidebar({ userRole, schoolLogo, schoolName }: { userRol
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden overflow-hidden">
             <span className="font-bold text-base tracking-tight text-white leading-tight truncate">
-              {schoolName || "ScholAI"}
+              {schoolName || "Axora"}
             </span>
             <span className="text-[8px] font-bold uppercase tracking-widest text-accent">Core Engine</span>
           </div>

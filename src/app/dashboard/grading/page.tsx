@@ -110,7 +110,7 @@ export default function GradingAssistantPage() {
                 <Sparkles className="h-4 w-4 text-accent absolute -top-1 -right-1 animate-pulse" />
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold tracking-tight text-white">ScholAI is auditng...</p>
+                <p className="text-lg font-bold tracking-tight text-white">Axora is auditing...</p>
                 <p className="text-xs text-muted-foreground mt-1">Analyzing context, tone, and logic patterns.</p>
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function GradingAssistantPage() {
                 </CardContent>
                 <CardFooter className="bg-white/5 p-4 justify-center">
                   <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest text-center">
-                    Verified ScholAI Analysis Output
+                    Verified Axora Analysis Output
                   </p>
                 </CardFooter>
               </Card>

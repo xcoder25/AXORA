@@ -192,7 +192,7 @@ export default function LoginPage() {
           </div>
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold tracking-tight text-white">
-              ScholAI <span className="text-accent text-glow">OS</span>
+              Axora <span className="text-accent text-glow">OS</span>
             </CardTitle>
             <CardDescription className="text-muted-foreground font-semibold uppercase tracking-wider text-[9px]">
               Academic Intelligence Infrastructure
