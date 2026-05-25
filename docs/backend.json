@@ -3,11 +3,88 @@
   "entities": {
     "School": {
       "title": "Educational Institution",
-      "description": "Stores institutional data and configuration for multi-tenancy.",
+      "description": "Comprehensive institutional data for multi-tenancy and SaaS configuration.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
+        "shortName": { "type": "string" },
+        "type": { "type": "string", "enum": ["Primary", "Secondary", "Nursery", "Tertiary", "Combined"] },
+        "ownership": { "type": "string", "enum": ["Private", "Public"] },
+        "mission": { "type": "string" },
+        "yearEstablished": { "type": "number" },
+        "motto": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "officialEmail": { "type": "string", "format": "email" },
+            "phone": { "type": "string" },
+            "altPhone": { "type": "string" },
+            "website": { "type": "string" },
+            "social": {
+              "type": "object",
+              "properties": {
+                "facebook": { "type": "string" },
+                "instagram": { "type": "string" },
+                "linkedin": { "type": "string" }
+              }
+            }
+          }
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "country": { "type": "string" },
+            "state": { "type": "string" },
+            "city": { "type": "string" },
+            "address": { "type": "string" },
+            "postalCode": { "type": "string" },
+            "timeZone": { "type": "string" }
+          }
+        },
+        "academicStructure": {
+          "type": "object",
+          "properties": {
+            "system": { "type": "string", "enum": ["Term System", "Semester System"] },
+            "count": { "type": "number", "description": "Number of terms or semesters" },
+            "levels": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "capacity": {
+          "type": "object",
+          "properties": {
+            "expectedPopulation": { "type": "number" },
+            "currentStudentCount": { "type": "number" },
+            "teacherCount": { "type": "number" },
+            "campusCount": { "type": "number" }
+          }
+        },
+        "branding": {
+          "type": "object",
+          "properties": {
+            "portalName": { "type": "string" },
+            "subdomain": { "type": "string" },
+            "primaryColor": { "type": "string" },
+            "secondaryColor": { "type": "string" }
+          }
+        },
+        "finance": {
+          "type": "object",
+          "properties": {
+            "currency": { "type": "string" },
+            "method": { "type": "string" },
+            "gateway": { "type": "string" }
+          }
+        },
+        "security": {
+          "type": "object",
+          "properties": {
+            "twoFactor": { "type": "boolean" },
+            "backupFrequency": { "type": "string", "enum": ["Daily", "Weekly", "Monthly"] }
+          }
+        },
+        "modules": { "type": "array", "items": { "type": "string" } },
         "adminUid": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
