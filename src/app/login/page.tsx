@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -79,7 +79,6 @@ export default function LoginPage() {
     if (!auth || !db) return;
 
     if (authMode === 'deploy-institution') {
-      // Step navigation logic
       if (deployStep === 'basic') {
         setDeployStep('academic');
         return;
@@ -93,7 +92,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Final step validation
       if (password !== confirmPassword) {
         alert("Passwords do not match");
         return;
@@ -175,6 +173,13 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const updateSchoolField = (field: string, value: any) => {
+    setSchoolData(prev => {
+      if ((prev as any)[field] === value) return prev;
+      return { ...prev, [field]: value };
+    });
   };
 
   const toggleModule = (mod: string) => {
@@ -321,32 +326,37 @@ export default function LoginPage() {
                           <Input 
                             placeholder="School Name" 
                             value={schoolData.name} 
-                            onChange={e => setSchoolData(prev => ({...prev, name: e.target.value}))} 
+                            onChange={e => updateSchoolField('name', e.target.value)} 
                             className="bg-white/3 border-white/10 h-10 rounded-xl" 
                             required={deployStep === 'basic'} 
                           />
                           <Input 
                             placeholder="Short Alias (GA)" 
                             value={schoolData.shortName} 
-                            onChange={e => setSchoolData(prev => ({...prev, shortName: e.target.value}))} 
+                            onChange={e => updateSchoolField('shortName', e.target.value)} 
                             className="bg-white/3 border-white/10 h-10 rounded-xl" 
                           />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <Select 
                             value={schoolData.ownership} 
-                            onValueChange={v => {
-                              if (v !== schoolData.ownership) setSchoolData(prev => ({...prev, ownership: v}));
-                            }}
+                            onValueChange={v => updateSchoolField('ownership', v)}
                           >
-                            <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="Private">Private</SelectItem><SelectItem value="Public">Public</SelectItem></SelectContent>
+                            <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="Private">Private</SelectItem>
+                                <SelectItem value="Public">Public</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
                           </Select>
                           <Input 
                             placeholder="Founded Year" 
                             type="number" 
                             value={schoolData.foundedYear} 
-                            onChange={e => setSchoolData(prev => ({...prev, foundedYear: e.target.value}))} 
+                            onChange={e => updateSchoolField('foundedYear', e.target.value)} 
                             className="bg-white/3 border-white/10 h-10 rounded-xl" 
                           />
                         </div>
@@ -385,14 +395,19 @@ export default function LoginPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <Select 
                             value={schoolData.academicSystem} 
-                            onValueChange={v => {
-                              if (v !== schoolData.academicSystem) setSchoolData(prev => ({...prev, academicSystem: v}));
-                            }}
+                            onValueChange={v => updateSchoolField('academicSystem', v)}
                           >
-                            <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="Term System">Trimesters</SelectItem><SelectItem value="Semester System">Semesters</SelectItem></SelectContent>
+                            <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="Term System">Trimesters</SelectItem>
+                                <SelectItem value="Semester System">Semesters</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
                           </Select>
-                          <Input type="number" placeholder="Cycles" value={schoolData.numPeriods} onChange={e => setSchoolData(prev => ({...prev, numPeriods: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" />
+                          <Input type="number" placeholder="Cycles" value={schoolData.numPeriods} onChange={e => updateSchoolField('numPeriods', e.target.value)} className="bg-white/3 border-white/10 h-10 rounded-xl" />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           {academicLevels.map(lvl => (
@@ -414,20 +429,25 @@ export default function LoginPage() {
                       </TabsContent>
 
                       <TabsContent value="branding" className="space-y-4 mt-0">
-                        <Input placeholder="Motto" value={schoolData.motto} onChange={e => setSchoolData(prev => ({...prev, motto: e.target.value}))} className="bg-white/3 border-white/10 h-10 rounded-xl" />
+                        <Input placeholder="Motto" value={schoolData.motto} onChange={e => updateSchoolField('motto', e.target.value)} className="bg-white/3 border-white/10 h-10 rounded-xl" />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="flex items-center gap-3 bg-white/3 p-2.5 rounded-xl border border-white/10">
-                            <input type="color" value={schoolData.primaryColor} onChange={e => setSchoolData(prev => ({...prev, primaryColor: e.target.value}))} className="w-5 h-5 rounded-md bg-transparent border-none cursor-pointer" />
+                            <input type="color" value={schoolData.primaryColor} onChange={e => updateSchoolField('primaryColor', e.target.value)} className="w-5 h-5 rounded-md bg-transparent border-none cursor-pointer" />
                             <span className="text-[9px] font-mono">{schoolData.primaryColor}</span>
                           </div>
                           <Select 
                             value={schoolData.currency} 
-                            onValueChange={v => {
-                              if (v !== schoolData.currency) setSchoolData(prev => ({...prev, currency: v}));
-                            }}
+                            onValueChange={v => updateSchoolField('currency', v)}
                           >
-                            <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="USD">USD ($)</SelectItem><SelectItem value="NGN">NGN (₦)</SelectItem></SelectContent>
+                            <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="USD">USD ($)</SelectItem>
+                                <SelectItem value="NGN">NGN (₦)</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
                           </Select>
                         </div>
                       </TabsContent>
