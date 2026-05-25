@@ -14,7 +14,10 @@ import {
   NotebookPen, 
   Settings, 
   Sparkles, 
-  Users 
+  Users,
+  ShieldAlert,
+  Building2,
+  Database
 } from "lucide-react"
 
 import {
@@ -46,22 +49,28 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    title: "School Admin",
+    url: "/dashboard/admin",
+    icon: ShieldAlert,
+    roles: ["admin"],
+  },
+  {
     title: "Study Planner",
     url: "/dashboard/planner",
     icon: Calendar,
-    roles: ["student"],
+    roles: ["student", "admin"],
   },
   {
     title: "Grading Assistant",
     url: "/dashboard/grading",
     icon: NotebookPen,
-    roles: ["teacher"],
+    roles: ["teacher", "admin"],
   },
   {
     title: "Course Registry",
     url: "/dashboard/courses",
     icon: BookOpen,
-    roles: ["teacher"],
+    roles: ["teacher", "admin"],
   },
   {
     title: "Performance",
@@ -69,16 +78,16 @@ const navItems: NavItem[] = [
     icon: LineChart,
   },
   {
-    title: "Resource Generator",
+    title: "Resource Engine",
     url: "/dashboard/resources",
     icon: Sparkles,
-    roles: ["teacher"],
+    roles: ["teacher", "admin"],
   },
   {
-    title: "Student Registry",
+    title: "Student Database",
     url: "/dashboard/registry",
     icon: Users,
-    roles: ["teacher"],
+    roles: ["teacher", "admin"],
   },
 ]
 
@@ -90,31 +99,38 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
   );
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b px-4 py-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <GraduationCap className="h-5 w-5" />
+    <Sidebar collapsible="icon" className="border-r border-white/5 bg-[#02040a]">
+      <SidebarHeader className="px-6 py-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white shadow-lg shadow-primary/20">
+            <GraduationCap className="h-6 w-6" />
           </div>
-          <span className="font-headline text-xl font-bold tracking-tight group-data-[collapsible=icon]:hidden">
-            ScholAI
-          </span>
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+            <span className="font-headline text-xl font-black tracking-tighter text-white">
+              ScholAI
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-accent/80">Enterprise</span>
+          </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      
+      <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
-          <SidebarMenu>
+          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-4">
+            Command Center
+          </SidebarGroupLabel>
+          <SidebarMenu className="gap-2">
             {filteredNavItems.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton 
                   asChild 
                   isActive={pathname === item.url}
                   tooltip={item.title}
+                  className="rounded-xl h-11 px-4 hover:bg-white/5 data-[active=true]:bg-primary data-[active=true]:text-white transition-all duration-300"
                 >
-                  <Link href={item.url}>
-                    <item.icon />
-                    <span>{item.title}</span>
+                  <Link href={item.url} className="flex items-center gap-3">
+                    <item.icon className="h-4 w-4" />
+                    <span className="font-bold text-xs uppercase tracking-widest">{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -122,12 +138,13 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t p-4">
+
+      <SidebarFooter className="p-4 bg-white/5">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Settings">
-              <Settings />
-              <span>Settings</span>
+            <SidebarMenuButton tooltip="System Settings" className="rounded-xl h-11 px-4 text-muted-foreground hover:text-white transition-colors">
+              <Settings className="h-4 w-4" />
+              <span className="font-bold text-xs uppercase tracking-widest">Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

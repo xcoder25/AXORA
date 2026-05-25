@@ -1,44 +1,47 @@
 
 {
   "entities": {
-    "User": {
-      "title": "User Profile",
-      "description": "Stores user information and roles for access control.",
+    "School": {
+      "title": "Educational Institution",
+      "description": "Stores institutional data and configuration for multi-tenancy.",
       "type": "object",
       "properties": {
-        "uid": {
-          "type": "string",
-          "description": "Unique identifier for the user."
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "User's email address."
-        },
-        "displayName": {
-          "type": "string",
-          "description": "User's full name."
-        },
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "adminUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "adminUid"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user information, school affiliation, and roles.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "schoolId": { "type": "string" },
         "role": {
           "type": "string",
-          "enum": ["teacher", "student"],
-          "description": "The user's role in the system."
+          "enum": ["admin", "teacher", "student"]
         },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        }
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["uid", "email", "role"]
+      "required": ["uid", "email", "role", "schoolId"]
     }
   },
   "auth": {
-    "providers": ["google.com", "password"]
+    "providers": ["password"]
   },
   "firestore": {
+    "/schools/{schoolId}": {
+      "schema": "School",
+      "description": "Institutional records."
+    },
     "/users/{userId}": {
       "schema": "User",
-      "description": "User profiles stored by their unique auth ID."
+      "description": "User profiles with school affiliation."
     }
   }
 }
