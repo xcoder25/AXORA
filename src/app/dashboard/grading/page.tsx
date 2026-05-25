@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, CheckCircle2, AlertCircle, FileText, Send } from "lucide-react"
+import { Loader2, CheckCircle2, AlertCircle, FileText, Send, Sparkles } from "lucide-react"
 
 export default function GradingAssistantPage() {
   const [loading, setLoading] = useState(false)
@@ -31,115 +31,136 @@ export default function GradingAssistantPage() {
     }
   }
 
-  const getBadgeColor = (category: string) => {
+  const getBadgeStyles = (category: string) => {
     switch (category) {
-      case 'Excellent': return 'bg-green-100 text-green-700 border-green-200'
-      case 'Good': return 'bg-blue-100 text-blue-700 border-blue-200'
-      case 'Satisfactory': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
-      case 'Needs Improvement': return 'bg-orange-100 text-orange-700 border-orange-200'
-      case 'Unsatisfactory': return 'bg-red-100 text-red-700 border-red-200'
-      default: return 'bg-gray-100 text-gray-700'
+      case 'Excellent': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+      case 'Good': return 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+      case 'Satisfactory': return 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+      case 'Needs Improvement': return 'bg-orange-500/10 text-orange-600 border-orange-500/20'
+      case 'Unsatisfactory': return 'bg-red-500/10 text-red-600 border-red-500/20'
+      default: return 'bg-gray-500/10 text-gray-600'
     }
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      <div>
-        <h2 className="font-headline text-3xl font-bold text-primary">Automated Grading Assistant</h2>
-        <p className="text-muted-foreground">Intelligent semantic logic analysis for open-ended assignments.</p>
+    <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col gap-2">
+        <h2 className="font-headline text-4xl font-extrabold text-foreground tracking-tight">AI Grading Assistant</h2>
+        <p className="text-muted-foreground text-lg">Semantic analysis and logic evaluation for written assignments.</p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <form onSubmit={handleGrade} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Assignment Details</CardTitle>
-              <CardDescription>Enter the prompt and the student's work.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="assignmentPrompt">Assignment Prompt</Label>
-                <Textarea 
-                  id="assignmentPrompt" 
-                  name="assignmentPrompt" 
-                  placeholder="Describe the context or question given to the student..." 
-                  className="min-h-[120px]"
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="studentSubmission">Student Submission</Label>
-                <Textarea 
-                  id="studentSubmission" 
-                  name="studentSubmission" 
-                  placeholder="Paste the student's response here..." 
-                  className="min-h-[300px]"
-                  required 
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <><Send className="mr-2 h-4 w-4" /> Analyze Submission</>}
-              </Button>
-            </CardFooter>
-          </Card>
-        </form>
+      <div className="grid gap-10 lg:grid-cols-5">
+        <div className="lg:col-span-2">
+          <form onSubmit={handleGrade} className="space-y-6 h-full">
+            <Card className="border-none shadow-xl h-full flex flex-col">
+              <CardHeader className="bg-primary text-primary-foreground rounded-t-2xl">
+                <CardTitle className="font-headline">Input Data</CardTitle>
+                <CardDescription className="text-primary-foreground/70">Context and student work for analysis.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6 pt-6 flex-1">
+                <div className="space-y-2">
+                  <Label htmlFor="assignmentPrompt" className="text-sm font-bold uppercase tracking-widest opacity-60">Prompt</Label>
+                  <Textarea 
+                    id="assignmentPrompt" 
+                    name="assignmentPrompt" 
+                    placeholder="What was the question?" 
+                    className="min-h-[100px] rounded-xl border-muted bg-muted/20 focus:bg-background transition-all"
+                    required 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="studentSubmission" className="text-sm font-bold uppercase tracking-widest opacity-60">Student Submission</Label>
+                  <Textarea 
+                    id="studentSubmission" 
+                    name="studentSubmission" 
+                    placeholder="Paste student text here..." 
+                    className="min-h-[350px] rounded-xl border-muted bg-muted/20 focus:bg-background transition-all"
+                    required 
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="pt-0 p-6">
+                <Button type="submit" className="w-full h-12 rounded-xl text-lg font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]" disabled={loading}>
+                  {loading ? (
+                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Evaluating...</>
+                  ) : (
+                    <><Sparkles className="mr-2 h-5 w-5" /> Run Analysis</>
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+          </form>
+        </div>
 
-        <div className="space-y-6">
+        <div className="lg:col-span-3">
           {!feedback && !loading && (
-            <div className="flex flex-col items-center justify-center h-full py-20 text-center border-2 border-dashed rounded-xl bg-muted/30">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="font-headline text-xl font-medium">Ready for Analysis</h3>
-              <p className="text-muted-foreground max-w-xs">Submit an assignment to receive AI-powered semantic feedback.</p>
+            <div className="flex flex-col items-center justify-center h-full min-h-[500px] text-center p-12 border-2 border-dashed rounded-3xl bg-muted/30">
+              <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-6">
+                <FileText className="h-10 w-10 text-muted-foreground/40" />
+              </div>
+              <h3 className="font-headline text-2xl font-bold">Awaiting Submission</h3>
+              <p className="text-muted-foreground max-w-xs mt-2">Submit an assignment to generate AI-powered semantic insights and feedback.</p>
             </div>
           )}
 
           {loading && (
-            <div className="flex flex-col items-center justify-center h-full py-20 space-y-4">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-lg font-medium animate-pulse">Evaluating logic and content...</p>
+            <div className="flex flex-col items-center justify-center h-full min-h-[500px] space-y-6 bg-muted/10 rounded-3xl border">
+              <div className="relative">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                <Sparkles className="h-6 w-6 text-amber-500 absolute top-0 right-0 animate-pulse" />
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-bold tracking-tight">ScholAI is thinking...</p>
+                <p className="text-sm text-muted-foreground mt-1">Analyzing context, tone, and logic patterns.</p>
+              </div>
             </div>
           )}
 
           {feedback && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="font-headline">Assessment Result</CardTitle>
-                  <Badge variant="outline" className={`${getBadgeColor(feedback.suggestedGradeCategory)} px-3 py-1`}>
+            <div className="space-y-6 animate-in zoom-in-95 duration-700">
+              <Card className="border-none shadow-2xl overflow-hidden rounded-3xl">
+                <CardHeader className="flex flex-row items-center justify-between bg-muted/50 pb-6 border-b">
+                  <div className="space-y-1">
+                    <CardTitle className="font-headline text-2xl">Analysis Report</CardTitle>
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Final Evaluation</p>
+                  </div>
+                  <Badge variant="outline" className={`${getBadgeStyles(feedback.suggestedGradeCategory)} px-5 py-2 text-sm font-black rounded-xl border-2`}>
                     {feedback.suggestedGradeCategory}
                   </Badge>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2 text-primary">
+                <CardContent className="space-y-8 pt-8">
+                  <div className="relative pl-6 border-l-4 border-primary/20">
+                    <h4 className="text-xs font-black uppercase tracking-widest mb-3 text-primary flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4" />
-                      Overall Feedback
+                      Executive Summary
                     </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {feedback.overallFeedback}
+                    <p className="text-lg font-medium leading-relaxed text-foreground/90 italic">
+                      "{feedback.overallFeedback}"
                     </p>
                   </div>
 
-                  <div>
-                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2 text-accent">
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-black uppercase tracking-widest mb-3 text-amber-600 flex items-center gap-2">
                       <AlertCircle className="h-4 w-4" />
-                      Areas for Improvement
+                      Improvement Matrix
                     </h4>
-                    <ul className="space-y-2">
+                    <div className="grid gap-3">
                       {feedback.areasForImprovement.map((area, i) => (
-                        <li key={i} className="text-sm flex gap-3 p-2 bg-secondary/50 rounded-md border border-secondary">
-                          <span className="text-accent font-bold">{i + 1}.</span>
-                          {area}
-                        </li>
+                        <div key={i} className="flex gap-4 p-4 bg-muted/30 rounded-2xl border hover:bg-muted/50 transition-colors group">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background font-bold text-amber-600 shadow-sm border">
+                            {i + 1}
+                          </span>
+                          <p className="text-sm font-medium leading-relaxed group-hover:text-foreground transition-colors">
+                            {area}
+                          </p>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 </CardContent>
-                <CardFooter className="border-t pt-4">
-                  <p className="text-xs text-muted-foreground italic">
-                    Note: This is an AI-generated assessment. Final grading should be verified by the instructor.
+                <CardFooter className="bg-muted/30 p-4 justify-center">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest text-center">
+                    Verified ScholAI Analysis Outcome
                   </p>
                 </CardFooter>
               </Card>
