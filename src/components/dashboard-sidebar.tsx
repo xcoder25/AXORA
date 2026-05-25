@@ -1,28 +1,24 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
-import { 
-  BookOpen, 
-  GraduationCap, 
-  LayoutDashboard, 
-  LineChart, 
-  NotebookPen, 
-  Settings, 
-  Sparkles, 
+import {
+  BookOpen,
+  GraduationCap,
+  LayoutDashboard,
+  LineChart,
+  NotebookPen,
+  Settings,
   Users,
   Wallet,
   Megaphone,
   Camera,
-  Package,
   Video,
   ClipboardList,
   Zap,
   GanttChartSquare,
-  UserCheck,
-  IdCard
+  IdCard,
 } from "lucide-react"
 
 import {
@@ -39,10 +35,10 @@ import {
 import { cn } from "@/lib/utils"
 
 interface NavItem {
-  title: string;
-  url: string;
-  icon: any;
-  roles?: string[];
+  title: string
+  url: string
+  icon: React.ComponentType<{ className?: string }>
+  roles?: string[]
 }
 
 const navItems: NavItem[] = [
@@ -62,54 +58,78 @@ const navItems: NavItem[] = [
   { title: "Registry", url: "/dashboard/registry", icon: Users, roles: ["teacher", "admin"] },
 ]
 
-export function DashboardSidebar({ userRole, schoolLogo, schoolName }: { userRole: string; schoolLogo?: string; schoolName?: string; }) {
+export function DashboardSidebar({
+  userRole,
+  schoolLogo,
+  schoolName,
+}: {
+  userRole: string
+  schoolLogo?: string
+  schoolName?: string
+}) {
   const pathname = usePathname()
-  const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(userRole));
+  const filteredNavItems = navItems.filter(
+    (item) => !item.roles || item.roles.includes(userRole)
+  )
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-white/5 bg-[#02040a]">
-      <SidebarHeader className="px-5 py-6">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-indigo-100/90 bg-white/75 backdrop-blur-2xl shadow-[4px_0_24px_rgba(79,70,229,0.06)]"
+    >
+      <SidebarHeader className="px-4 py-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white shadow-lg relative overflow-hidden group">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-indigo-md transition-transform duration-300 hover:scale-105">
             {schoolLogo ? (
-              <div className="relative w-full h-full p-2">
-                <Image src={schoolLogo} alt={schoolName || "Logo"} fill className="object-contain" />
-              </div>
+              <Image src={schoolLogo} alt={schoolName || "Logo"} fill className="object-contain p-2" />
             ) : (
               <GraduationCap className="h-5 w-5" />
             )}
           </div>
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden overflow-hidden">
-            <span className="font-bold text-base tracking-tight text-white leading-tight truncate">
+          <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
+            <span className="truncate font-bold text-sm tracking-tight text-slate-900">
               {schoolName || "Axora"}
             </span>
-            <span className="text-[8px] font-bold uppercase tracking-widest text-accent">Node OS</span>
+            <span className="text-[8px] font-bold uppercase tracking-widest text-indigo-500">
+              Institutional OS
+            </span>
           </div>
         </div>
       </SidebarHeader>
-      
-      <SidebarContent className="px-3">
+
+      <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/30 mb-2">
-            Institutional Core
+          <SidebarGroupLabel className="mb-2 px-3 text-[9px] font-bold uppercase tracking-widest text-indigo-400/90">
+            Navigation
           </SidebarGroupLabel>
           <SidebarMenu className="gap-1">
-            {filteredNavItems.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton 
-                  asChild 
+            {filteredNavItems.map((item, i) => (
+              <SidebarMenuItem
+                key={item.title}
+                className="animate-in fade-in slide-in-from-left-2 fill-mode-both"
+                style={{ animationDelay: `${i * 40}ms` }}
+              >
+                <SidebarMenuButton
+                  asChild
                   isActive={pathname === item.url}
                   tooltip={item.title}
                   className={cn(
-                    "rounded-xl h-10 px-4 transition-all group",
-                    pathname === item.url 
-                      ? "bg-primary/10 text-white" 
-                      : "hover:bg-white/5 text-muted-foreground hover:text-white"
+                    "h-10 rounded-xl px-3 transition-all duration-300",
+                    pathname === item.url
+                      ? "bg-indigo-600 text-white shadow-indigo-md hover:bg-indigo-600 hover:text-white"
+                      : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
                   )}
                 >
                   <Link href={item.url} className="flex items-center gap-3">
-                    <item.icon className={cn("h-4 w-4", pathname === item.url ? "text-primary" : "text-muted-foreground")} />
-                    <span className="font-semibold text-[10px] uppercase tracking-wider">{item.title}</span>
+                    <item.icon
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-110",
+                        pathname === item.url ? "text-white" : "text-indigo-400"
+                      )}
+                    />
+                    <span className="font-semibold text-[10px] uppercase tracking-wider">
+                      {item.title}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -118,10 +138,10 @@ export function DashboardSidebar({ userRole, schoolLogo, schoolName }: { userRol
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="rounded-xl h-10 px-4 text-muted-foreground hover:text-white transition-colors bg-white/3">
+            <SidebarMenuButton className="h-10 rounded-xl px-3 text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-700">
               <Settings className="h-4 w-4" />
               <span className="font-semibold text-[10px] uppercase tracking-wider">Settings</span>
             </SidebarMenuButton>

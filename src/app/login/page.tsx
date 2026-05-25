@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuth, useFirestore } from '@/firebase';
+import { isFirebaseConfigured, FIREBASE_SETUP_MESSAGE } from '@/firebase/config';
+import { getFirebaseAuthErrorMessage } from '@/firebase/auth-errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,8 +14,6 @@ import {
   GraduationCap, 
   Loader2, 
   KeyRound, 
-  Users, 
-  ShieldCheck, 
   Heart, 
   Sparkles, 
   Globe, 
@@ -26,20 +26,17 @@ import {
   Bus,
   Laptop,
   Box,
-  ArrowRight
+  ArrowRight,
+  Check
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'deploy-institution' | 'join-parent'>('login');
-  const [loginRole, setLoginRole] = useState<'admin' | 'teacher' | 'student'>('student');
-  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -76,6 +73,10 @@ export default function LoginPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isFirebaseConfigured()) {
+      alert(FIREBASE_SETUP_MESSAGE);
+      return;
+    }
     if (!auth || !db) return;
 
     if (authMode === 'deploy-institution') {
@@ -167,20 +168,24 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, email, password);
       }
       router.push('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Auth error:', error);
-      alert(error.message);
+      alert(getFirebaseAuthErrorMessage(error));
     } finally {
       setLoading(false);
     }
   };
 
   const updateSchoolField = useCallback((field: string, value: any) => {
+    if (value === '' || value == null) return;
     setSchoolData(prev => {
       if ((prev as any)[field] === value) return prev;
       return { ...prev, [field]: value };
     });
   }, []);
+
+  const schoolSelectClassName =
+    'flex h-10 w-full rounded-xl border border-white/10 bg-white/3 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
 
   const toggleModule = useCallback((mod: string) => {
     setSchoolData(prev => ({
@@ -249,31 +254,9 @@ export default function LoginPage() {
             <form onSubmit={handleAuth} className="mt-6 space-y-4">
               {authMode === 'login' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                  <div className="space-y-2">
-                    <Label className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1">Clearance Level</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: 'admin', icon: ShieldCheck, label: 'Admin' },
-                        { id: 'teacher', icon: Users, label: 'Teacher' },
-                        { id: 'student', icon: GraduationCap, label: 'Scholar' }
-                      ].map((role) => (
-                        <button
-                          key={role.id}
-                          type="button"
-                          onClick={() => setLoginRole(role.id as any)}
-                          className={cn(
-                            "flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl border transition-all h-16",
-                            loginRole === role.id 
-                              ? "bg-primary/10 border-primary/50 text-primary" 
-                              : "bg-white/3 border-white/5 text-muted-foreground hover:bg-white/8"
-                          )}
-                        >
-                          <role.icon className="h-4 w-4" />
-                          <span className="text-[9px] font-semibold uppercase tracking-wider">{role.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <p className="text-[10px] text-muted-foreground/80 px-1 leading-relaxed">
+                    Your role (Admin, Faculty, Scholar, etc.) is loaded from your institutional profile after sign-in.
+                  </p>
                   <div className="space-y-3">
                     <div className="space-y-1.5">
                       <Label className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Email</Label>
@@ -338,20 +321,14 @@ export default function LoginPage() {
                           />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Select 
-                            value={schoolData.ownership} 
-                            onValueChange={v => updateSchoolField('ownership', v)}
+                          <select
+                            value={schoolData.ownership}
+                            onChange={e => updateSchoolField('ownership', e.target.value)}
+                            className={schoolSelectClassName}
                           >
-                            <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectItem value="Private">Private</SelectItem>
-                                <SelectItem value="Public">Public</SelectItem>
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
+                            <option value="Private">Private</option>
+                            <option value="Public">Public</option>
+                          </select>
                           <Input 
                             placeholder="Founded Year" 
                             type="number" 
@@ -393,20 +370,14 @@ export default function LoginPage() {
 
                       <TabsContent value="academic" className="space-y-4 mt-0">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Select 
-                            value={schoolData.academicSystem} 
-                            onValueChange={v => updateSchoolField('academicSystem', v)}
+                          <select
+                            value={schoolData.academicSystem}
+                            onChange={e => updateSchoolField('academicSystem', e.target.value)}
+                            className={schoolSelectClassName}
                           >
-                            <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectItem value="Term System">Trimesters</SelectItem>
-                                <SelectItem value="Semester System">Semesters</SelectItem>
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
+                            <option value="Term System">Trimesters</option>
+                            <option value="Semester System">Semesters</option>
+                          </select>
                           <Input type="number" placeholder="Cycles" value={schoolData.numPeriods} onChange={e => updateSchoolField('numPeriods', e.target.value)} className="bg-white/3 border-white/10 h-10 rounded-xl" />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -421,7 +392,17 @@ export default function LoginPage() {
                                   : "bg-white/3 border-white/5 text-muted-foreground hover:bg-white/8"
                               )}
                             >
-                              <Checkbox checked={schoolData.levels.includes(lvl)} onCheckedChange={() => {}} className="h-3.5 w-3.5 border-white/20 pointer-events-none" />
+                              <span
+                                aria-hidden
+                                className={cn(
+                                  "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border",
+                                  schoolData.levels.includes(lvl)
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-white/20 bg-transparent"
+                                )}
+                              >
+                                {schoolData.levels.includes(lvl) && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+                              </span>
                               <Label className="text-[10px] cursor-pointer pointer-events-none">{lvl}</Label>
                             </div>
                           ))}
@@ -435,20 +416,14 @@ export default function LoginPage() {
                             <input type="color" value={schoolData.primaryColor} onChange={e => updateSchoolField('primaryColor', e.target.value)} className="w-5 h-5 rounded-md bg-transparent border-none cursor-pointer" />
                             <span className="text-[9px] font-mono">{schoolData.primaryColor}</span>
                           </div>
-                          <Select 
-                            value={schoolData.currency} 
-                            onValueChange={v => updateSchoolField('currency', v)}
+                          <select
+                            value={schoolData.currency}
+                            onChange={e => updateSchoolField('currency', e.target.value)}
+                            className={schoolSelectClassName}
                           >
-                            <SelectTrigger className="bg-white/3 border-white/10 h-10 rounded-xl">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectItem value="USD">USD ($)</SelectItem>
-                                <SelectItem value="NGN">NGN (₦)</SelectItem>
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
+                            <option value="USD">USD ($)</option>
+                            <option value="NGN">NGN (₦)</option>
+                          </select>
                         </div>
                       </TabsContent>
 
@@ -486,7 +461,7 @@ export default function LoginPage() {
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
                   <div className="flex items-center gap-2">
-                    {authMode === 'login' ? `Login as ${loginRole}` : 
+                    {authMode === 'login' ? 'Sign In' : 
                      authMode === 'join-parent' ? "Join as Guardian" : 
                      (deployStep === 'modules' ? "Initialize Institution" : (
                        <>Next Step <ArrowRight className="h-4 w-4 ml-1" /></>

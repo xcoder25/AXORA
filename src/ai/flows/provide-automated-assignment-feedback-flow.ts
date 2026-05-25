@@ -19,7 +19,7 @@ export type ProvideAutomatedAssignmentFeedbackInput = z.infer<typeof ProvideAuto
 const ProvideAutomatedAssignmentFeedbackOutputSchema = z.object({
   overallFeedback: z.string().describe('Comprehensive feedback on the student\'s submission, highlighting strengths and weaknesses.'),
   areasForImprovement: z.array(z.string()).describe('A list of specific, actionable suggestions for the student to improve their assignment.'),
-  suggested GradeCategory: z.enum(['Excellent', 'Good', 'Satisfactory', 'Needs Improvement', 'Unsatisfactory']).describe('An overall category for the suggested grade.'),
+  suggestedGradeCategory: z.enum(['Excellent', 'Good', 'Satisfactory', 'Needs Improvement', 'Unsatisfactory']).describe('An overall category for the suggested grade.'),
 });
 export type ProvideAutomatedAssignmentFeedbackOutput = z.infer<typeof ProvideAutomatedAssignmentFeedbackOutputSchema>;
 
