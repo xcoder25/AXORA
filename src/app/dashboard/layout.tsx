@@ -7,10 +7,11 @@ import { useUser, useDoc, useAuth } from '@/firebase';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { Separator } from "@/components/ui/separator"
-import { Loader2, LogOut, ShieldCheck, Building } from 'lucide-react';
+import { Loader2, LogOut, ShieldCheck, Building, Heart, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({
   children,
@@ -50,6 +51,14 @@ export default function DashboardLayout({
 
   if (!user) return null;
 
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'admin': return <ShieldCheck className="h-3 w-3" />;
+      case 'parent': return <Heart className="h-3 w-3" />;
+      default: return <User className="h-3 w-3" />;
+    }
+  };
+
   return (
     <SidebarProvider>
       <DashboardSidebar userRole={profile?.role || 'student'} />
@@ -70,8 +79,11 @@ export default function DashboardLayout({
             <div className="flex items-center gap-6">
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-black text-white uppercase tracking-wider">{profile?.displayName || user.email?.split('@')[0]}</p>
-                <div className="flex items-center justify-end gap-1 text-[10px] text-accent font-bold uppercase">
-                  <ShieldCheck className="h-3 w-3" />
+                <div className={cn(
+                  "flex items-center justify-end gap-1 text-[10px] font-bold uppercase",
+                  profile?.role === 'parent' ? "text-pink-500" : "text-accent"
+                )}>
+                  {getRoleIcon(profile?.role)}
                   {profile?.role || 'Scholar'}
                 </div>
               </div>

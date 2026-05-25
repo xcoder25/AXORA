@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation"
 import { 
   BookOpen, 
   Calendar, 
-  ChevronRight, 
   GraduationCap, 
   LayoutDashboard, 
   LineChart, 
@@ -16,8 +15,7 @@ import {
   Sparkles, 
   Users,
   ShieldAlert,
-  Building2,
-  Database
+  Baby
 } from "lucide-react"
 
 import {
@@ -25,14 +23,12 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar"
 
 interface NavItem {
@@ -58,7 +54,7 @@ const navItems: NavItem[] = [
     title: "Study Planner",
     url: "/dashboard/planner",
     icon: Calendar,
-    roles: ["student", "admin"],
+    roles: ["student", "admin", "parent"],
   },
   {
     title: "Grading Assistant",
@@ -70,18 +66,25 @@ const navItems: NavItem[] = [
     title: "Course Registry",
     url: "/dashboard/courses",
     icon: BookOpen,
-    roles: ["teacher", "admin"],
+    roles: ["teacher", "admin", "student"],
+  },
+  {
+    title: "Child Progress",
+    url: "/dashboard/performance",
+    icon: Baby,
+    roles: ["parent"],
   },
   {
     title: "Performance",
     url: "/dashboard/performance",
     icon: LineChart,
+    roles: ["teacher", "admin", "student"],
   },
   {
     title: "Resource Engine",
     url: "/dashboard/resources",
     icon: Sparkles,
-    roles: ["teacher", "admin"],
+    roles: ["teacher", "admin", "student"],
   },
   {
     title: "Student Database",
