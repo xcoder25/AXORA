@@ -1,0 +1,11 @@
+Create these composite indexes in Firebase (mooneychat).
+Indexes are also defined in firestore.indexes.json — deploy with: npm run firebase:deploy:indexes
+
+Attendance (Identity Matrix ledger):
+https://console.firebase.google.com/v1/r/project/mooneychat/firestore/indexes?create_composite=Ck1wcm9qZWN0cy9tb29uZXljaGF0L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9hdHRlbmRhbmNlL2luZGV4ZXMvXxABGgwKCHNjaG9vbElkEAEaDQoJdGltZXN0YW1wEAIaDAoIX19uYW1lX18QAg
+
+Finance:
+https://console.firebase.google.com/v1/r/project/mooneychat/firestore/indexes?create_composite=Ckpwcm9qZWN0cy9tb29uZXljaGF0L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9maW5hbmNlL2luZGV4ZXMvXxABGgwKCHNjaG9vbElkEAEaEwoPbGFzdFBheW1lbnREYXRlEAIaDAoIX19uYW1lX18QAg
+
+Exams: deploy firestore.indexes.json (schoolId + createdAt)
+Users registry: deploy firestore.indexes.json (role + schoolId)

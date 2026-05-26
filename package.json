@@ -11,7 +11,9 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "firebase:login": "firebase login",
-    "firebase:deploy:rules": "firebase deploy --only firestore:rules --project mooneychat"
+    "firebase:deploy:rules": "firebase deploy --only firestore:rules --project mooneychat",
+    "firebase:deploy:indexes": "firebase deploy --only firestore:indexes --project mooneychat",
+    "firebase:deploy:firestore": "firebase deploy --only firestore --project mooneychat"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.28.0",
@@ -44,6 +46,7 @@
     "embla-carousel-react": "^8.6.0",
     "firebase": "^11.9.1",
     "genkit": "^1.28.0",
+    "lodash": "^4.18.1",
     "lucide-react": "^0.475.0",
     "next": "15.5.9",
     "patch-package": "^8.0.0",

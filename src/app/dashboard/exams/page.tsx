@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, doc, setDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,13 +14,18 @@ import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function CBTExamsPage() {
   const { user } = useUser()
+  const { data: profile } = useDoc(user ? `users/${user.uid}` : null)
   const [searchTerm, setSearchTerm] = useState("")
   const db = useFirestore()
   
   const examsQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, 'exams'), where('schoolId', '==', 'INST-001'), orderBy('createdAt', 'desc'));
-  }, [db]);
+    if (!db || !profile?.schoolId) return null;
+    return query(
+      collection(db, 'exams'),
+      where('schoolId', '==', profile.schoolId),
+      orderBy('createdAt', 'desc')
+    );
+  }, [db, profile?.schoolId]);
 
   const { data: exams } = useCollection(examsQuery);
 
@@ -30,6 +35,7 @@ export default function CBTExamsPage() {
   )
 
   const handleCreateExam = () => {
+    if (!profile?.schoolId) return;
     const examId = `EXM-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
     const docRef = doc(db, 'exams', examId);
     const payload = {
@@ -37,7 +43,7 @@ export default function CBTExamsPage() {
       subject: 'Undetermined',
       duration: 60,
       status: 'Draft',
-      schoolId: 'INST-001',
+      schoolId: profile.schoolId,
       createdAt: new Date().toISOString(),
       students: 0
     };

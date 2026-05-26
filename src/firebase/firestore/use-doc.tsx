@@ -1,36 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot, DocumentData, FirestoreError } from 'firebase/firestore';
 import { useFirestore, useAuth } from '../provider';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
+function isPermissionDenied(err: unknown): boolean {
+  return (
+    (err as FirestoreError)?.code === 'permission-denied' ||
+    (err as { code?: string })?.code === 'permission-denied'
+  );
+}
+
 export function useDoc(path: string | null) {
   const db = useFirestore();
   const auth = useAuth();
-  const [authReady, setAuthReady] = useState(false);
   const [data, setData] = useState<DocumentData | null>(null);
   const [loading, setLoading] = useState(!!path);
   const [error, setError] = useState<Error | null>(null);
-
-  // Wait for Auth token before Firestore reads (avoids permission-denied race on dashboard load)
-  useEffect(() => {
-    if (!auth) {
-      setAuthReady(false);
-      return;
-    }
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        await user.getIdToken();
-        setAuthReady(true);
-      } else {
-        setAuthReady(false);
-      }
-    });
-    return () => unsubscribe();
-  }, [auth]);
 
   useEffect(() => {
     if (!path) {
@@ -40,34 +29,75 @@ export function useDoc(path: string | null) {
       return;
     }
 
-    if (!authReady) {
+    if (!auth) {
       setLoading(true);
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    const docRef = doc(db, path);
-    const unsubscribe = onSnapshot(
-      docRef,
-      (snapshot) => {
-        setData(snapshot.data() || null);
-        setLoading(false);
-      },
-      (err) => {
-        console.error('Firestore snapshot error:', err);
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        setError(permissionError);
-        setLoading(false);
-      }
-    );
+    let cancelled = false;
+    let unsubscribeSnapshot: (() => void) | undefined;
 
-    return () => unsubscribe();
-  }, [db, path, authReady]);
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      unsubscribeSnapshot?.();
+      unsubscribeSnapshot = undefined;
+
+      if (cancelled) return;
+
+      if (!user) {
+        setData(null);
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
+      const usersMatch = path.match(/^users\/([^/]+)$/);
+      if (usersMatch && usersMatch[1] !== user.uid) {
+        setLoading(false);
+        setError(new Error('Cannot read another user profile.'));
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      void user.getIdToken().then(() => {
+        if (cancelled) return;
+
+        const docRef = doc(db, path);
+        unsubscribeSnapshot = onSnapshot(
+          docRef,
+          (snapshot) => {
+            if (cancelled) return;
+            setData(snapshot.data() ?? null);
+            setLoading(false);
+            setError(null);
+          },
+          (err) => {
+            if (cancelled) return;
+            console.error('Firestore snapshot error:', err);
+            if (!isPermissionDenied(err)) {
+              setError(err instanceof Error ? err : new Error(String(err)));
+              setLoading(false);
+              return;
+            }
+            const permissionError = new FirestorePermissionError({
+              path: docRef.path,
+              operation: 'get',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            setError(permissionError);
+            setLoading(false);
+          }
+        );
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribeAuth();
+      unsubscribeSnapshot?.();
+    };
+  }, [db, path, auth]);
 
   return { data, loading, error };
 }

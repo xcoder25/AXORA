@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Receipt, TrendingUp, AlertCircle, Plus, DollarSign, Smartphone, PieChart } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, query, where, orderBy, doc, setDoc } from "firebase/firestore"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
@@ -14,15 +14,22 @@ import { FirestorePermissionError } from "@/firebase/errors"
 export default function FinanceHubPage() {
   const [activeTab, setActiveTab] = useState("ledger");
   const db = useFirestore();
+  const { user } = useUser();
+  const { data: profile } = useDoc(user ? `users/${user.uid}` : null);
 
   const financeQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, 'finance'), where('schoolId', '==', 'INST-001'), orderBy('lastPaymentDate', 'desc'));
-  }, [db]);
+    if (!db || !profile?.schoolId) return null;
+    return query(
+      collection(db, 'finance'),
+      where('schoolId', '==', profile.schoolId),
+      orderBy('lastPaymentDate', 'desc')
+    );
+  }, [db, profile?.schoolId]);
 
   const { data: feeRecords } = useCollection(financeQuery);
 
   const handleCreateInvoice = () => {
+    if (!profile?.schoolId) return;
     const studentId = `STU-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
     const docRef = doc(db, 'finance', studentId);
     const payload = {
@@ -33,7 +40,7 @@ export default function FinanceHubPage() {
       transport: 200,
       paid: 0,
       status: 'Pending',
-      schoolId: 'INST-001',
+      schoolId: profile.schoolId,
       lastPaymentDate: new Date().toISOString()
     };
     

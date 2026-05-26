@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   Play
 } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, query, where, doc, updateDoc, setDoc } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { errorEmitter } from "@/firebase/error-emitter"
@@ -22,11 +22,13 @@ import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function WorkflowsPage() {
   const db = useFirestore()
+  const { user } = useUser()
+  const { data: profile } = useDoc(user ? `users/${user.uid}` : null)
   
   const workflowsQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, 'workflows'), where('schoolId', '==', 'INST-001'));
-  }, [db]);
+    if (!db || !profile?.schoolId) return null;
+    return query(collection(db, 'workflows'), where('schoolId', '==', profile.schoolId));
+  }, [db, profile?.schoolId]);
 
   const { data: workflows } = useCollection(workflowsQuery);
 
@@ -40,6 +42,7 @@ export default function WorkflowsPage() {
   };
 
   const handleCreateWorkflow = () => {
+    if (!profile?.schoolId) return;
     const id = `WF-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
     const docRef = doc(db, 'workflows', id);
     const payload = {
@@ -48,7 +51,7 @@ export default function WorkflowsPage() {
       via: "Dashboard",
       isActive: true,
       freq: "Instant",
-      schoolId: "INST-001"
+      schoolId: profile.schoolId,
     };
 
     setDoc(docRef, payload, { merge: true })

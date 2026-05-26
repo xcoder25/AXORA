@@ -14,22 +14,23 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Search, Plus, Filter, MoreHorizontal, User } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, query, where, orderBy } from "firebase/firestore"
 
 export default function StudentRegistryPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const db = useFirestore()
+  const { user } = useUser()
+  const { data: profile } = useDoc(user ? `users/${user.uid}` : null)
 
   const studentsQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    // Real-time query for student users in this school
+    if (!db || !profile?.schoolId) return null;
     return query(
       collection(db, 'users'),
       where('role', '==', 'student'),
-      where('schoolId', '==', 'INST-001') // Mock ID
+      where('schoolId', '==', profile.schoolId)
     );
-  }, [db]);
+  }, [db, profile?.schoolId]);
 
   const { data: students, loading } = useCollection(studentsQuery);
 
