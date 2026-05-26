@@ -40,6 +40,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [logoUploading, setLogoUploading] = useState(false);
   
   const [deployStep, setDeployStep] = useState('basic');
   const [schoolData, setSchoolData] = useState({
@@ -62,7 +64,10 @@ export default function LoginPage() {
     gateway: 'Stripe',
     primaryColor: '#6366f1',
     secondaryColor: '#10b981',
-    modules: [] as string[]
+    modules: [] as string[],
+    // Stored as a data URL so it works without Storage rules.
+    // Used to theme loaders/spinners and branding across the SaaS.
+    logoUrl: '' as string,
   });
 
   const [schoolId, setSchoolId] = useState('');
@@ -109,6 +114,7 @@ export default function LoginPage() {
           id: generatedSchoolId,
           name: schoolData.name,
           shortName: schoolData.shortName,
+          logoUrl: schoolData.logoUrl || '',
           type: schoolData.type,
           ownership: schoolData.ownership,
           foundedYear: schoolData.foundedYear,
@@ -183,6 +189,28 @@ export default function LoginPage() {
       return { ...prev, [field]: value };
     });
   }, []);
+
+  const handleLogoUpload = useCallback(
+    (file: File | null) => {
+      if (!file) return;
+      setLogoUploading(true);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result === 'string') {
+          updateSchoolField('logoUrl', result);
+        }
+        setLogoUploading(false);
+      };
+      reader.onerror = () => {
+        setLogoUploading(false);
+        alert('Logo upload failed. Please try a different image.');
+      };
+      reader.readAsDataURL(file);
+    },
+    [updateSchoolField]
+  );
 
   const schoolSelectClassName =
     'flex h-10 w-full rounded-xl border border-white/10 bg-white/3 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
@@ -411,6 +439,36 @@ export default function LoginPage() {
 
                       <TabsContent value="branding" className="space-y-4 mt-0">
                         <Input placeholder="Motto" value={schoolData.motto} onChange={e => updateSchoolField('motto', e.target.value)} className="bg-white/3 border-white/10 h-10 rounded-xl" />
+
+                        <div className="space-y-2">
+                          <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                            School Logo (PNG/JPG/SVG)
+                          </Label>
+                          <div className="flex items-center gap-4">
+                            <div className="h-16 w-16 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center">
+                              {schoolData.logoUrl ? (
+                                // Prefer <img> because logoUrl is a data URL (not a remote URL).
+                                <img src={schoolData.logoUrl} alt="School logo preview" className="h-full w-full object-contain p-2" />
+                              ) : (
+                                <GraduationCap className="h-6 w-6 text-white/20" />
+                              )}
+                            </div>
+
+                            <div className="flex-1 space-y-2">
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                disabled={logoUploading}
+                                onChange={(e) => handleLogoUpload(e.target.files?.[0] ?? null)}
+                                className="bg-white/3 border-white/10 h-10 rounded-xl"
+                              />
+                              <p className="text-[9px] text-muted-foreground/80">
+                                {logoUploading ? 'Uploading logo...' : 'Used for the school-themed loader/spinner.'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="flex items-center gap-3 bg-white/3 p-2.5 rounded-xl border border-white/10">
                             <input type="color" value={schoolData.primaryColor} onChange={e => updateSchoolField('primaryColor', e.target.value)} className="w-5 h-5 rounded-md bg-transparent border-none cursor-pointer" />

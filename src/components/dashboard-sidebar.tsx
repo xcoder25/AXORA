@@ -81,7 +81,15 @@ export function DashboardSidebar({
         <div className="flex items-center gap-3">
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-indigo-md transition-transform duration-300 hover:scale-105">
             {schoolLogo ? (
-              <Image src={schoolLogo} alt={schoolName || "Logo"} fill className="object-contain p-2" />
+              schoolLogo.startsWith('data:') ? (
+                <img
+                  src={schoolLogo}
+                  alt={schoolName || "Logo"}
+                  className="h-full w-full object-contain p-2"
+                />
+              ) : (
+                <Image src={schoolLogo} alt={schoolName || "Logo"} fill className="object-contain p-2" />
+              )
             ) : (
               <GraduationCap className="h-5 w-5" />
             )}

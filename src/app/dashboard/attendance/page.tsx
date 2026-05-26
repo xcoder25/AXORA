@@ -47,6 +47,7 @@ import { doc, setDoc, serverTimestamp, collection, query, where, orderBy, limit 
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 import { cn } from "@/lib/utils"
+import { resolveCameraStreamUrl } from "@/lib/camera-bridge"
 
 type CameraNode = {
   id: string
@@ -198,7 +199,7 @@ export default function AttendancePage() {
     }
   }
 
-  const streamUrl = `https://picsum.photos/seed/${activeCam}/1200/800`
+  const streamUrl = resolveCameraStreamUrl({ nodeId: activeCam, protocol: 'mock' })
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 max-w-[1600px] mx-auto w-full">
