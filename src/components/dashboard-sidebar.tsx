@@ -149,9 +149,11 @@ export function DashboardSidebar({
       <SidebarFooter className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="h-10 rounded-xl px-3 text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-700">
-              <Settings className="h-4 w-4" />
-              <span className="font-semibold text-[10px] uppercase tracking-wider">Settings</span>
+            <SidebarMenuButton asChild className="h-10 rounded-xl px-3 text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-700">
+              <Link href="/dashboard/settings" className="flex items-center gap-3">
+                <Settings className="h-4 w-4" />
+                <span className="font-semibold text-[10px] uppercase tracking-wider">Settings</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
