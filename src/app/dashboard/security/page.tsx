@@ -1,13 +1,13 @@
-
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { WebRTCCamera } from "@/components/ui/webrtc-camera"
 import { 
   Video, 
   ShieldAlert, 
@@ -23,29 +23,201 @@ import {
   Loader2, 
   CheckCircle2, 
   Radio,
-  Cpu
+  Cpu,
+  RefreshCw,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut
 } from "lucide-react"
 
 export default function SecurityPage() {
   const [integrating, setIntegrating] = useState(false)
+  const [scanning, setScanning] = useState(false)
   const [activeTab, setActiveTab] = useState<'monitor' | 'devices'>('monitor')
+  const [cameras, setCameras] = useState<any[]>([])
+  const [discoveryResults, setDiscoveryResults] = useState<any[]>([])
+  const [detections, setDetections] = useState<Record<string, any[]>>({})
+  const [activeCamId, setActiveCamId] = useState<string>("CAM-01")
+  const [health, setHealth] = useState<any>({
+    redis: "Checking...",
+    go2rtc: "Checking...",
+    active_ai_pipelines: 0,
+    computed_neural_load: "0%"
+  })
 
-  const hardwareNodes = [
-    { id: 'NVR-HK-01', name: 'Main Hikvision Hub', type: 'NVR', protocol: 'HikConnect', status: 'Online', load: '12%' },
-    { id: 'DVR-GEN-02', name: 'Perimeter DVR', type: 'DVR', protocol: 'RTSP', status: 'Online', load: '45%' },
-    { id: 'WIFI-IP-03', name: 'Science Wing IP', type: 'Camera', protocol: 'ONVIF', status: 'Warning', load: 'N/A' },
-  ];
+  // Link form states
+  const [linkId, setLinkId] = useState("")
+  const [linkName, setLinkName] = useState("")
+  const [linkBrand, setLinkBrand] = useState("hikvision")
+  const [linkIp, setLinkIp] = useState("")
+  const [linkPort, setLinkPort] = useState("554")
+  const [linkUser, setLinkUser] = useState("")
+  const [linkPass, setLinkPass] = useState("")
 
-  const cameraFeeds = [
-    { id: 'CAM-01', location: 'Main Entrance', status: 'Secure', alerts: 0, image: 'https://picsum.photos/seed/gate/400/300' },
-    { id: 'CAM-02', location: 'Computer Lab A', status: 'Activity', alerts: 1, image: 'https://picsum.photos/seed/lab/400/300' },
-    { id: 'CAM-03', location: 'Staff Room', status: 'Secure', alerts: 0, image: 'https://picsum.photos/seed/staff/400/300' },
-    { id: 'CAM-04', location: 'Science Wing', status: 'Secure', alerts: 0, image: 'https://picsum.photos/seed/science/400/300' },
-  ];
+  // Fetch registered cameras and health status
+  const fetchCameras = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/cameras")
+      if (res.ok) {
+        const data = await res.json()
+        setCameras(data)
+        if (data.length > 0 && !activeCamId) {
+          setActiveCamId(data[0].id)
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch cameras database from backend:", e)
+      // Standard static fallback if service isn't running yet
+      setCameras([
+        { id: 'CAM-01', name: 'Main Entrance', brand: 'Hikvision', ip: '192.168.1.64', status: 'Online', rtsp_url: '' },
+        { id: 'CAM-02', name: 'Computer Lab A', brand: 'Axis', ip: '192.168.1.88', status: 'Online', rtsp_url: '' },
+        { id: 'CAM-03', name: 'Staff Room', brand: 'Generic', ip: '192.168.1.110', status: 'Online', rtsp_url: '' },
+        { id: 'CAM-04', name: 'Science Wing', brand: 'Hanwha', ip: '192.168.1.120', status: 'Online', rtsp_url: '' },
+      ])
+    }
+  }
 
-  const handleIntegrate = () => {
+  const fetchHealth = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/cameras/health")
+      if (res.ok) {
+        const data = await res.json()
+        setHealth(data)
+      }
+    } catch (e) {
+      setHealth({
+        redis: "Disconnected",
+        go2rtc: "Disconnected",
+        active_ai_pipelines: 0,
+        computed_neural_load: "Offline"
+      })
+    }
+  }
+
+  useEffect(() => {
+    fetchCameras()
+    fetchHealth()
+    
+    // Poll health status
+    const interval = setInterval(() => {
+      fetchHealth()
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Listen to AI event WebSockets
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    
+    const connectWS = () => {
+      try {
+        ws = new WebSocket("ws://localhost:8000/ws/events")
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            if (data.camera_id) {
+              setDetections(prev => ({
+                ...prev,
+                [data.camera_id]: data.detections || []
+              }))
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+        
+        ws.onclose = () => {
+          // Retry connection after 5 seconds
+          setTimeout(connectWS, 5000)
+        }
+      } catch (err) {
+        console.warn("Could not link to real-time events WebSocket stream:", err)
+      }
+    }
+
+    connectWS()
+    return () => {
+      if (ws) ws.close()
+    }
+  }, [])
+
+  // PTZ continuous / relative triggers
+  const executePTZ = async (pan: number, tilt: number, zoom: number) => {
+    try {
+      await fetch(`http://localhost:8000/api/cameras/${activeCamId}/ptz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pan, tilt, zoom })
+      })
+    } catch (e) {
+      console.error("PTZ fetch error:", e)
+    }
+  }
+
+  // WS-Discovery scan
+  const handleScan = async () => {
+    setScanning(true)
+    try {
+      const res = await fetch("http://localhost:8000/api/cameras/discovery")
+      if (res.ok) {
+        const data = await res.json()
+        setDiscoveryResults(data)
+      }
+    } catch (e) {
+      console.error("WS-Discovery scan failed:", e)
+    } finally {
+      setScanning(false)
+    }
+  }
+
+  // Camera integration linking
+  const handleIntegrate = async () => {
+    if (!linkId || !linkName || !linkIp) return
+    
     setIntegrating(true)
-    setTimeout(() => setIntegrating(false), 2000)
+    try {
+      const payload = {
+        id: linkId,
+        name: linkName,
+        brand: linkBrand,
+        ip: linkIp,
+        port: parseInt(linkPort),
+        username: linkUser,
+        password: linkPass
+      }
+      
+      const res = await fetch("http://localhost:8000/api/cameras", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      
+      if (res.ok) {
+        await fetchCameras()
+        setLinkId("")
+        setLinkName("")
+        setLinkIp("")
+        setLinkUser("")
+        setLinkPass("")
+        setActiveTab("monitor")
+      }
+    } catch (e) {
+      console.error("Failed to link camera:", e)
+    } finally {
+      setIntegrating(false)
+    }
+  }
+
+  const handleAutoFill = (device: any) => {
+    setLinkId(`CAM-${device.ip.split('.').pop()}`)
+    setLinkName(`Discovery (${device.ip})`)
+    setLinkIp(device.ip)
+    setLinkBrand("generic")
   }
 
   return (
@@ -60,7 +232,7 @@ export default function SecurityPage() {
             <Radio className="h-3 w-3 text-emerald-500 animate-pulse" />
           </div>
           <h2 className="font-headline text-4xl font-bold text-white tracking-tight">Security Command</h2>
-          <p className="text-muted-foreground text-lg">Integrated Hikvision, DVR, and Wireless Telemetry Hub.</p>
+          <p className="text-muted-foreground text-lg">Integrated Axis, Hikvision, Dahua, and ONVIF Telemetry Hub.</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" className="rounded-xl border-white/10 bg-white/5" onClick={() => setActiveTab(activeTab === 'monitor' ? 'devices' : 'monitor')}>
@@ -82,7 +254,7 @@ export default function SecurityPage() {
                 <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Active Streams</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-white">42 / 42</div>
+                <div className="text-3xl font-bold text-white">{cameras.length} / {cameras.length}</div>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
                   <p className="text-[9px] text-emerald-400 font-bold uppercase">100% Signal Stability</p>
@@ -91,88 +263,149 @@ export default function SecurityPage() {
             </Card>
             <Card className="glass-card">
               <CardHeader className="pb-2">
-                <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Hardware Nodes</CardTitle>
+                <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Stream Gateway</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-white">04</div>
-                <p className="text-[9px] text-muted-foreground font-bold uppercase mt-1">NVR/DVR Hubs Online</p>
+                <div className="text-3xl font-bold text-white">{health.go2rtc === "Connected" ? "go2rtc" : "Mock"}</div>
+                <p className="text-[9px] text-muted-foreground font-bold uppercase mt-1">
+                  Gateway: {health.go2rtc}
+                </p>
               </CardContent>
             </Card>
             <Card className="glass-card border-orange-500/20 bg-orange-500/5">
               <CardHeader className="pb-2">
-                <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-orange-400">AI Alerts</CardTitle>
+                <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-orange-400">Redis Broker</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-orange-400">03</div>
-                <p className="text-[9px] text-orange-400 font-bold uppercase mt-1">Anomalies Detected</p>
+                <div className="text-3xl font-bold text-orange-400">{health.redis}</div>
+                <p className="text-[9px] text-orange-400 font-bold uppercase mt-1">Event Broker Link Status</p>
               </CardContent>
             </Card>
             <Card className="glass-card">
               <CardHeader className="pb-2">
-                <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Network Link</CardTitle>
+                <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">AI Computed Load</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-white">8.4 Gbps</div>
-                <p className="text-[9px] text-primary font-bold uppercase mt-1">Encrypted Tunnel Active</p>
+                <div className="text-3xl font-bold text-white">{health.computed_neural_load}</div>
+                <p className="text-[9px] text-primary font-bold uppercase mt-1">Active pipelines: {health.active_ai_pipelines}</p>
               </CardContent>
             </Card>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-12">
             {/* Live Feed Grid */}
-            <div className="lg:col-span-8">
-              <Card className="glass-card border-none overflow-hidden h-full">
+            <div className="lg:col-span-8 space-y-6">
+              <Card className="glass-card border-none overflow-hidden">
                 <CardHeader className="bg-white/3 border-b border-white/5">
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-xl text-white">Unified Telemetry Feed</CardTitle>
-                      <CardDescription className="text-xs">Real-time H.265/ONVIF Optimized Streams.</CardDescription>
+                      <CardDescription className="text-xs">Real-time WebRTC/MSE Optimized Camera Grid.</CardDescription>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-primary text-[10px] font-bold uppercase tracking-widest h-8 px-4 rounded-lg bg-primary/10">
-                      Multi-Grid View <Monitor className="ml-2 h-3.5 w-3.5" />
-                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {cameraFeeds.map((feed) => (
-                      <div key={feed.id} className="group relative rounded-2xl overflow-hidden border border-white/5 bg-black/40 hover:border-primary/40 transition-all duration-700">
-                        <img src={feed.image} alt={feed.location} className="w-full aspect-video object-cover opacity-50 group-hover:opacity-70 transition-all duration-700 scale-100 group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
+                    {cameras.map((cam) => (
+                      <div 
+                        key={cam.id} 
+                        onClick={() => setActiveCamId(cam.id)}
+                        className={`relative cursor-pointer rounded-2xl overflow-hidden border transition-all ${
+                          activeCamId === cam.id ? "border-primary ring-2 ring-primary/20" : "border-white/5"
+                        }`}
+                      >
+                        <WebRTCCamera 
+                          cameraId={cam.id}
+                          location={cam.name}
+                          fallbackImage={`https://picsum.photos/seed/${cam.id}/400/300`}
+                          detections={detections[cam.id] || []}
+                        />
                         
-                        {/* HUD Overlay */}
-                        <div className="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none">
-                          <div className="flex justify-between items-start">
-                             <div className="flex gap-2">
-                                <Badge className={feed.alerts > 0 ? 'bg-orange-500 text-white' : 'bg-black/60 backdrop-blur-md text-white border-white/10 text-[8px]'}>
-                                  {feed.id}
-                                </Badge>
-                                {feed.alerts > 0 && <Badge className="bg-red-500 text-white animate-pulse text-[8px]">AI_FLAG</Badge>}
-                             </div>
-                             <div className="h-4 w-4 border-t border-r border-white/40" />
-                          </div>
-                          
-                          <div className="flex items-end justify-between">
-                             <div className="h-4 w-4 border-b border-l border-white/40" />
-                             <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/5">
-                                <Activity className={`h-3 w-3 ${feed.status === 'Activity' ? 'text-orange-400' : 'text-emerald-400'}`} />
-                                <span className="text-[8px] font-bold uppercase tracking-widest text-white">{feed.status}</span>
-                             </div>
-                          </div>
+                        {/* HUD overlays */}
+                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-mono text-white pointer-events-none uppercase">
+                          {cam.id} | {cam.brand}
                         </div>
-
-                        <div className="absolute bottom-3 left-3 text-[10px] font-bold text-white/90 drop-shadow-lg uppercase tracking-wider">
-                          {feed.location}
+                        <div className="absolute bottom-3 left-3 text-[10px] font-bold text-white drop-shadow-md pointer-events-none uppercase">
+                          {cam.name} ({cam.ip})
+                        </div>
+                        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-bold pointer-events-none uppercase text-emerald-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Live
                         </div>
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
+
+              {/* PTZ Joystick Controller overlay (integrated) */}
+              <Card className="glass-card border-none overflow-hidden">
+                <CardHeader className="bg-white/3 border-b border-white/5">
+                  <CardTitle className="text-sm text-white uppercase tracking-wider">PTZ Camera Control: {activeCamId}</CardTitle>
+                  <CardDescription className="text-xs">Send physical pan/tilt speed commands to active node.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-around gap-6">
+                  {/* Directional Pad */}
+                  <div className="relative w-36 h-36 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Button variant="ghost" size="icon" className="absolute top-1 hover:bg-white/10 h-8 w-8 rounded-full" onClick={() => executePTZ(0.0, 0.5, 0.0)}>
+                      <ChevronUp className="h-4 w-4 text-white" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="absolute bottom-1 hover:bg-white/10 h-8 w-8 rounded-full" onClick={() => executePTZ(0.0, -0.5, 0.0)}>
+                      <ChevronDown className="h-4 w-4 text-white" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="absolute left-1 hover:bg-white/10 h-8 w-8 rounded-full" onClick={() => executePTZ(-0.5, 0.0, 0.0)}>
+                      <ChevronLeft className="h-4 w-4 text-white" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="absolute right-1 hover:bg-white/10 h-8 w-8 rounded-full" onClick={() => executePTZ(0.5, 0.0, 0.0)}>
+                      <ChevronRight className="h-4 w-4 text-white" />
+                    </Button>
+                    
+                    {/* Central Stop button */}
+                    <Button 
+                      className="h-12 w-12 rounded-full bg-red-500/20 hover:bg-red-500/40 border border-red-500/40 text-[9px] font-bold text-red-400"
+                      onClick={() => executePTZ(0.0, 0.0, 0.0)}
+                    >
+                      STOP
+                    </Button>
+                  </div>
+
+                  {/* Zoom controls */}
+                  <div className="flex gap-4 sm:flex-col">
+                    <Button variant="outline" className="flex items-center gap-2 rounded-xl border-white/10 bg-white/5" onClick={() => executePTZ(0.0, 0.0, 0.5)}>
+                      <ZoomIn className="h-4 w-4" /> Zoom In
+                    </Button>
+                    <Button variant="outline" className="flex items-center gap-2 rounded-xl border-white/10 bg-white/5" onClick={() => executePTZ(0.0, 0.0, -0.5)}>
+                      <ZoomOut className="h-4 w-4" /> Zoom Out
+                    </Button>
+                  </div>
+
+                  {/* Quick Presets */}
+                  <div className="flex flex-wrap gap-2 max-w-xs justify-center">
+                    {["Preset 1", "Preset 2", "Preset 3"].map((preset, i) => (
+                      <Button 
+                        key={i} 
+                        variant="ghost" 
+                        className="text-[9px] font-mono border border-white/10 rounded-xl px-3 py-1 bg-white/3 hover:bg-white/5"
+                        onClick={async () => {
+                          try {
+                            await fetch(`http://localhost:8000/api/cameras/${activeCamId}/ptz`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ preset_id: String(i + 1) })
+                            })
+                          } catch (e) {}
+                        }}
+                      >
+                        {preset}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* AI Proctoring / Integrity Audit */}
-            <div className="lg:col-span-4">
+            {/* AI Proctoring / Neural Log */}
+            <div className="lg:col-span-4 space-y-6">
               <Card className="glass-card border-none h-full shadow-2xl">
                 <CardHeader className="bg-primary/10 border-b border-white/5">
                   <div className="flex items-center gap-2 mb-1">
@@ -180,46 +413,57 @@ export default function SecurityPage() {
                     <span className="text-[9px] font-bold uppercase tracking-widest text-primary">Neural Proctor Node</span>
                   </div>
                   <CardTitle className="text-xl text-white">Integrity Audit</CardTitle>
-                  <CardDescription className="text-xs">Live violation monitoring for Exam_A82.</CardDescription>
+                  <CardDescription className="text-xs">Live YOLO person detection alerts from registered streams.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
-                    <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex gap-4 animate-in fade-in slide-in-from-right-4">
-                       <div className="h-16 w-20 rounded-lg bg-black/40 flex items-center justify-center border border-red-500/30 overflow-hidden relative group">
-                           <img src="https://picsum.photos/seed/suspicious/200/150" className="object-cover w-full h-full opacity-60 group-hover:opacity-80 transition-opacity" />
-                           <div className="absolute inset-0 border-2 border-red-500 animate-pulse" />
-                       </div>
-                       <div className="flex-1 space-y-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Student_Node_3</span>
-                            <Badge className="bg-red-500 text-white text-[8px] h-4">ALERT</Badge>
+                    {/* Dynamic AI event tracking alerts */}
+                    {Object.entries(detections).some(([_, det]) => det.length > 0) ? (
+                      Object.entries(detections).map(([camId, det]) => {
+                        if (det.length === 0) return null;
+                        const cam = cameras.find(c => c.id === camId) || { name: camId };
+                        return (
+                          <div key={camId} className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 flex gap-4 animate-in fade-in slide-in-from-right-4">
+                            <div className="h-16 w-20 rounded-lg bg-black/40 flex items-center justify-center border border-orange-500/30 overflow-hidden relative group">
+                              <img src={`https://picsum.photos/seed/${camId}/200/150`} className="object-cover w-full h-full opacity-60" />
+                              <div className="absolute inset-0 border-2 border-orange-500 animate-pulse" />
+                            </div>
+                            <div className="flex-1 space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-bold text-white uppercase tracking-tighter">{cam.name}</span>
+                                <Badge className="bg-orange-500 text-white text-[8px] h-4">ALERT</Badge>
+                              </div>
+                              <p className="text-[10px] text-orange-400 font-bold leading-tight">
+                                Detected: {det.length} Person(s)
+                              </p>
+                              <p className="text-[8px] text-muted-foreground">Confidence: {Math.round(det[0].confidence * 100)}%</p>
+                            </div>
                           </div>
-                          <p className="text-[10px] text-red-400 font-bold leading-tight">Mobile device proximity detected.</p>
-                          <Button variant="ghost" className="h-5 p-0 text-[8px] font-bold uppercase tracking-widest text-red-500 hover:bg-transparent">Review Clip</Button>
-                       </div>
-                    </div>
-
-                    {[1, 2].map((i) => (
-                      <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/5 flex gap-4 hover:bg-white/8 transition-colors">
-                        <div className="h-16 w-20 rounded-lg bg-black/40 flex items-center justify-center border border-white/10 overflow-hidden">
-                           <img src={`https://picsum.photos/seed/student-${i}/200/150`} className="object-cover w-full h-full opacity-40" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Student_Node_{i}</span>
-                            <Badge variant="outline" className="text-[8px] border-emerald-500/20 text-emerald-500 h-4 uppercase">Nominal</Badge>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground leading-tight">Biometric posture stable. No suspicious audio.</p>
-                        </div>
+                        )
+                      })
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-8 border border-white/5 rounded-2xl bg-white/3">
+                        <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2" />
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">ALL NODES NOMINAL</span>
+                        <p className="text-[8px] text-muted-foreground text-center mt-1">No AI anomalies detected in active feeds.</p>
                       </div>
-                    ))}
+                    )}
+
+                    {/* Passive logs */}
+                    <div className="border-t border-white/5 pt-4">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Biometric System Logs</h4>
+                      <div className="space-y-2 h-48 overflow-y-auto pr-1">
+                        {cameras.map((c, i) => (
+                          <div key={i} className="flex justify-between items-center text-[9px] p-2 bg-white/3 rounded-lg border border-white/5">
+                            <span className="font-mono text-white">{c.id}</span>
+                            <span className="text-muted-foreground">{c.ip}</span>
+                            <Badge className="bg-emerald-500/10 text-emerald-500 text-[8px] border-emerald-500/20">{c.status}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
-                <CardFooter className="p-6 pt-0">
-                   <Button variant="outline" className="w-full h-10 rounded-xl text-[10px] font-bold uppercase tracking-widest border-white/10 hover:bg-white/5">
-                     Full Integrity Report
-                   </Button>
-                </CardFooter>
               </Card>
             </div>
           </div>
@@ -227,6 +471,7 @@ export default function SecurityPage() {
       ) : (
         /* Hardware Configuration View */
         <div className="grid gap-8 lg:grid-cols-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+           {/* Link Device form */}
            <div className="lg:col-span-4">
               <Card className="glass-card border-none">
                 <CardHeader className="bg-primary/10 border-b border-white/5 p-6">
@@ -235,36 +480,53 @@ export default function SecurityPage() {
                     <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">Secure Integration</span>
                   </div>
                   <CardTitle className="text-xl text-white">Link Device</CardTitle>
-                  <CardDescription className="text-xs">Authenticate Hikvision, DVR, or IP hardware.</CardDescription>
+                  <CardDescription className="text-xs">Authenticate Axis, Hikvision, Dahua, or ONVIF hardware.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Camera ID</Label>
+                        <Input placeholder="CAM-01" className="bg-white/5 border-white/10 rounded-xl h-11 text-white" value={linkId} onChange={(e) => setLinkId(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Camera Name</Label>
+                        <Input placeholder="Main Gate" className="bg-white/5 border-white/10 rounded-xl h-11 text-white" value={linkName} onChange={(e) => setLinkName(e.target.value)} />
+                      </div>
+                   </div>
                    <div className="space-y-1.5">
-                      <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Integration Type</Label>
-                      <Select defaultValue="hikvision">
-                        <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11">
-                          <SelectValue placeholder="Select Device Type" />
+                      <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">CCTV Brand Protocol</Label>
+                      <Select value={linkBrand} onValueChange={(val) => setLinkBrand(val)}>
+                        <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11 text-white">
+                          <SelectValue placeholder="Select Brand Protocol" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="hikvision">Hikvision NVR/DVR</SelectItem>
-                          <SelectItem value="dvr">Generic DVR Hub</SelectItem>
-                          <SelectItem value="ip-cam">Wireless IP Camera</SelectItem>
-                          <SelectItem value="onvif">ONVIF Compliant Device</SelectItem>
+                          <SelectItem value="hikvision">Hikvision (ISAPI)</SelectItem>
+                          <SelectItem value="axis">Axis (VAPIX)</SelectItem>
+                          <SelectItem value="dahua">Dahua (CGI)</SelectItem>
+                          <SelectItem value="hanwha">Hanwha (SUNAPI)</SelectItem>
+                          <SelectItem value="generic">Generic ONVIF Compliant</SelectItem>
                         </SelectContent>
                       </Select>
                    </div>
                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">IP / Hostname</Label>
-                        <Input placeholder="192.168.1.10" className="bg-white/5 border-white/10 rounded-xl h-11" />
+                        <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">IP Address</Label>
+                        <Input placeholder="192.168.1.64" className="bg-white/5 border-white/10 rounded-xl h-11 text-white" value={linkIp} onChange={(e) => setLinkIp(e.target.value)} />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Service Port</Label>
-                        <Input placeholder="8000" className="bg-white/5 border-white/10 rounded-xl h-11" />
+                        <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">RTSP Stream Port</Label>
+                        <Input placeholder="554" className="bg-white/5 border-white/10 rounded-xl h-11 text-white" value={linkPort} onChange={(e) => setLinkPort(e.target.value)} />
                       </div>
                    </div>
-                   <div className="space-y-1.5">
-                      <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Access Token / Password</Label>
-                      <Input type="password" placeholder="••••••••" className="bg-white/5 border-white/10 rounded-xl h-11" />
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Auth Username</Label>
+                        <Input placeholder="admin" className="bg-white/5 border-white/10 rounded-xl h-11 text-white" value={linkUser} onChange={(e) => setLinkUser(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Auth Password</Label>
+                        <Input type="password" placeholder="••••••••" className="bg-white/5 border-white/10 rounded-xl h-11 text-white" value={linkPass} onChange={(e) => setLinkPass(e.target.value)} />
+                      </div>
                    </div>
                    <div className="p-4 rounded-xl bg-white/3 border border-white/5">
                       <div className="flex items-center gap-3 mb-2">
@@ -272,7 +534,7 @@ export default function SecurityPage() {
                         <span className="text-[9px] font-bold text-white uppercase">Real-time Tunneling Mode</span>
                       </div>
                       <p className="text-[9px] text-muted-foreground leading-relaxed">
-                        Establishing a P2P tunnel for HikConnect or RTSP fallback if NAT is restricted.
+                        Establishing dynamic stream transcoding tunnel via go2rtc and registering active pipelines.
                       </p>
                    </div>
                 </CardContent>
@@ -284,43 +546,94 @@ export default function SecurityPage() {
               </Card>
            </div>
 
-           <div className="lg:col-span-8">
+           {/* WS-Discovery matrix and network device list */}
+           <div className="lg:col-span-8 space-y-6">
+              <Card className="glass-card border-none">
+                <CardHeader className="bg-white/3 border-b border-white/5 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl text-white">Network Auto-Discovery</CardTitle>
+                    <CardDescription className="text-xs">Scan the local network for ONVIF-compliant IP Cameras.</CardDescription>
+                  </div>
+                  <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 text-[9px] uppercase tracking-wider font-bold" onClick={handleScan} disabled={scanning}>
+                    {scanning ? <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Scanning Subnet...</> : <><Search className="mr-2 h-3.5 w-3.5" /> Scan Network</>}
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-6">
+                   {discoveryResults.length > 0 ? (
+                      <div className="grid gap-4">
+                        {discoveryResults.map((dev, i) => (
+                          <div key={i} className="flex items-center justify-between p-4 bg-white/3 border border-white/5 rounded-2xl hover:bg-white/5 transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <Wifi className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-white">IP: {dev.ip}</p>
+                                <span className="text-[8px] text-muted-foreground font-mono">{dev.xaddr}</span>
+                              </div>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="text-[9px] font-bold border border-white/10 bg-white/3 text-white uppercase hover:bg-white/8 rounded-xl"
+                              onClick={() => handleAutoFill(dev)}
+                            >
+                              Auto Link
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                   ) : (
+                      <div className="flex flex-col items-center justify-center py-10 text-center">
+                        <Activity className="h-8 w-8 text-muted-foreground/30 animate-pulse mb-2" />
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">No devices scanned yet.</p>
+                        <p className="text-[10px] text-muted-foreground max-w-sm mt-1">
+                          Click "Scan Network" to send a multicast WS-Discovery probe across your network.
+                        </p>
+                      </div>
+                   )}
+                </CardContent>
+              </Card>
+
+              {/* Registered nodes registry lists */}
               <Card className="glass-card border-none">
                 <CardHeader className="bg-white/3 border-b border-white/5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl text-white">Institutional Node Matrix</CardTitle>
-                      <CardDescription className="text-xs">Managing local and remote security hardware clusters.</CardDescription>
-                    </div>
-                  </div>
+                  <CardTitle className="text-xl text-white">Linked Device Registry</CardTitle>
+                  <CardDescription className="text-xs">Active and linked physical security hardware clusters.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
                    <div className="grid gap-4">
-                      {hardwareNodes.map((node) => (
+                      {cameras.map((node) => (
                         <div key={node.id} className="flex items-center justify-between p-5 bg-white/3 border border-white/5 rounded-2xl hover:bg-white/5 transition-all group">
                            <div className="flex items-center gap-4">
                               <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:scale-110 transition-transform">
-                                 {node.type === 'NVR' ? <Server className="h-6 w-6 text-primary" /> : node.type === 'DVR' ? <Zap className="h-6 w-6 text-orange-400" /> : <Wifi className="h-6 w-6 text-blue-400" />}
+                                 <Server className="h-6 w-6 text-primary" />
                               </div>
                               <div>
                                  <p className="text-sm font-bold text-white">{node.name}</p>
                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="outline" className="text-[8px] font-bold border-white/10 text-muted-foreground uppercase">{node.protocol}</Badge>
-                                    <span className="text-[10px] text-muted-foreground font-mono">{node.id}</span>
+                                    <Badge variant="outline" className="text-[8px] font-bold border-white/10 text-muted-foreground uppercase">{node.brand}</Badge>
+                                    <span className="text-[10px] text-muted-foreground font-mono">{node.id} | IP: {node.ip}</span>
                                  </div>
                               </div>
                            </div>
-                           <div className="flex items-center gap-8">
-                              <div className="text-right hidden sm:block">
-                                 <p className="text-[9px] font-bold uppercase text-muted-foreground mb-1">Compute Load</p>
-                                 <p className="text-xs font-bold text-white">{node.load}</p>
-                              </div>
-                              <div className="flex flex-col items-end gap-1.5">
-                                 <Badge className={node.status === 'Online' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-orange-500/10 text-orange-500 border-orange-500/20'}>
-                                    {node.status}
-                                 </Badge>
-                                 <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Update 200ms ago</span>
-                              </div>
+                           <div className="flex items-center gap-4">
+                              <Badge className={node.status === 'Online' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}>
+                                 {node.status}
+                              </Badge>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="text-[9px] text-red-500 hover:text-red-400 font-bold uppercase tracking-wider"
+                                onClick={async () => {
+                                  try {
+                                    await fetch(`http://localhost:8000/api/cameras/${node.id}`, { method: "DELETE" })
+                                    await fetchCameras()
+                                  } catch (e) {}
+                                }}
+                              >
+                                Delete
+                              </Button>
                            </div>
                         </div>
                       ))}

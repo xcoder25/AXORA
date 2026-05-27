@@ -48,6 +48,7 @@ import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 import { cn } from "@/lib/utils"
 import { resolveCameraStreamUrl } from "@/lib/camera-bridge"
+import { WebRTCCamera } from "@/components/ui/webrtc-camera"
 
 type CameraNode = {
   id: string
@@ -107,11 +108,26 @@ export default function AttendancePage() {
   const handleScan = useCallback(async () => {
     if (!profile?.schoolId || activeNode.status === "offline") return
     setScanning(true)
-    const placeholderImage = `https://picsum.photos/seed/${activeCam}/1200/800`
+    let photoDataUri = `https://picsum.photos/seed/${activeCam}/1200/800`
 
     try {
+      try {
+        const snapshotRes = await fetch(`http://localhost:8000/api/cameras/${activeCam}/snapshot`)
+        if (snapshotRes.ok) {
+          const blob = await snapshotRes.blob()
+          const reader = new FileReader()
+          photoDataUri = await new Promise((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result as string)
+            reader.onerror = reject
+            reader.readAsDataURL(blob)
+          })
+        }
+      } catch (err) {
+        console.warn("Could not fetch real snapshot from camera, using default placeholder seed:", err)
+      }
+
       const data = await recognizeAttendance({
-        photoDataUri: placeholderImage,
+        photoDataUri: photoDataUri,
         nodeId: activeCam,
       })
       setResult(data)
@@ -305,15 +321,23 @@ export default function AttendancePage() {
                 )}
                 style={{ transform: `scale(${zoom[0] / 100})`, transformOrigin: "center center" }}
               >
-                <img
-                  src={streamUrl}
-                  alt="Live feed"
-                  className={cn(
-                    "w-full h-full object-cover transition-all duration-700",
-                    activeNode.status === "offline" && "opacity-30 grayscale",
-                    motionOverlay && "group-hover:grayscale-0 grayscale-[0.4]"
-                  )}
-                />
+                {activeNode.status !== "offline" ? (
+                  <WebRTCCamera 
+                    cameraId={activeCam}
+                    location={activeNode.label}
+                    fallbackImage={`https://picsum.photos/seed/${activeCam}/1200/800`}
+                  />
+                ) : (
+                  <img
+                    src={`https://picsum.photos/seed/${activeCam}/1200/800`}
+                    alt="Live feed"
+                    className={cn(
+                      "w-full h-full object-cover transition-all duration-700",
+                      activeNode.status === "offline" && "opacity-30 grayscale",
+                      motionOverlay && "group-hover:grayscale-0 grayscale-[0.4]"
+                    )}
+                  />
+                )}
                 {activeNode.status === "offline" && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/60">
                     <div className="text-center">

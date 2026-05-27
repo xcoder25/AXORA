@@ -22,8 +22,18 @@ export function resolveCameraStreamUrl({
   nodeId,
   protocol = 'mock',
 }: CameraStreamRequest): string {
-  // Placeholder stream while backend transcoder is not wired.
-  // Use encodeURIComponent so node IDs are safe in URLs.
+  // If the node uses live RTSP/ONVIF streaming, route it to our go2rtc Stream Gateway
+  if (protocol === 'rtsp' || protocol === 'onvif' || protocol === 'hikvision') {
+    // go2rtc WebRTC websocket source
+    return `ws://localhost:1984/api/ws?src=${encodeURIComponent(nodeId)}`;
+  }
+  
+  // FastAPI live snapshot route
+  if (protocol === 'ip-cam') {
+    return `http://localhost:8000/api/cameras/${encodeURIComponent(nodeId)}/snapshot`;
+  }
+
+  // Placeholder stream for mock testing
   const seed = `${nodeId}:${protocol}`;
   return `https://picsum.photos/seed/${encodeURIComponent(seed)}/1200/800`;
 }

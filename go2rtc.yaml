@@ -1,0 +1,22 @@
+# go2rtc configuration file
+# Ref: https://github.com/AlexxIT/go2rtc
+
+api:
+  listen: ":1984"
+
+rtsp:
+  listen: ":8554"
+
+# WebRTC streaming configuration
+webrtc:
+  listen: ":8555"
+  candidates:
+    - "127.0.0.1:8555" # Use localhost for development
+    - "use554"          # Auto-discover external IP if possible
+
+# Normalize codecs - transcode to H.264/AAC if needed for browser support
+streams:
+  # Examples of static streams can go here, but we will add/remove streams dynamically
+  # via the go2rtc API inside our FastAPI microservice.
+  mock_cam:
+    - rtsp://localhost:8554/mock_source

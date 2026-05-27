@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # go2rtc stream engine
+  go2rtc:
+    image: alexxit/go2rtc:latest
+    container_name: axora-go2rtc
+    ports:
+      - "1984:1984" # HTTP API / UI
+      - "8554:8554" # RTSP
+      - "8555:8555" # WebRTC
+      - "8555:8555/udp"
+    volumes:
+      - ./go2rtc.yaml:/config/go2rtc.yaml
+    restart: unless-stopped
+
+  # Redis for pub/sub events and caching
+  redis:
+    image: redis:7-alpine
+    container_name: axora-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # Surveillance Backend
+  surveillance-backend:
+    build:
+      context: ./surveillance-backend
+      dockerfile: Dockerfile
+    container_name: axora-surveillance-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - GO2RTC_URL=http://go2rtc:1984
+    depends_on:
+      - redis
+      - go2rtc
+    volumes:
+      - ./surveillance-backend:/app
+      # Map a local folder for persistent config, model weights, or service accounts if needed
+      - ./data:/app/data
+    restart: unless-stopped
