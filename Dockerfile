@@ -5,7 +5,7 @@ FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
-# Install build tools needed ONLY for compiling certain python wheels
+# Install build tools needed ONLY for compiling Python extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -24,8 +24,8 @@ FROM python:3.10-slim AS runtime
 
 WORKDIR /app
 
-# Install ONLY the absolute runtime dependencies needed for OpenCV, YOLO, and FFmpeg
-# Note: build-essential is omitted here, saving hundreds of MBs
+# Install ONLY the runtime libraries needed for OpenCV, YOLO, and FFmpeg
+# Notice build-essential is completely omitted here, saving ~800MB
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
