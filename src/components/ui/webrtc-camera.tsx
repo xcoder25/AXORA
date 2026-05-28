@@ -54,7 +54,7 @@ export function WebRTCCamera({ cameraId, location, fallbackImage, detections = [
               await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: msg.sdp }));
               const answer = await pc.createAnswer();
               await pc.setLocalDescription(answer);
-              ws.send(JSON.stringify({ type: "answer", sdp: answer.sdp }));
+              ws?.send(JSON.stringify({ type: "answer", sdp: answer.sdp }));
             } else if (msg.type === "candidate" && pc) {
               await pc.addIceCandidate(new RTCIceCandidate({ candidate: msg.candidate, sdpMLineIndex: 0 }));
             }

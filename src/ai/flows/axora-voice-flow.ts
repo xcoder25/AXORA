@@ -7,6 +7,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
+// @ts-ignore
 import wav from 'wav';
 
 async function toWav(
@@ -24,7 +25,7 @@ async function toWav(
 
     let bufs = [] as any[];
     writer.on('error', reject);
-    writer.on('data', function (d) {
+    writer.on('data', function (d: any) {
       bufs.push(d);
     });
     writer.on('end', function () {

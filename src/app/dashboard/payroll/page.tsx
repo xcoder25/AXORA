@@ -99,7 +99,7 @@ export default function PayrollPage() {
             bonus: bonus,
             status: "disbursed",
             date: new Date().toISOString().split("T")[0],
-            schoolId: profile.schoolId,
+            schoolId: profile?.schoolId || "",
             reference: response.reference,
             createdAt: new Date().toISOString()
           })
