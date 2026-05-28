@@ -123,7 +123,7 @@ export default function FinanceHubPage() {
             </Badge>
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
           </div>
-          <h2 className="font-headline text-4xl font-bold text-white tracking-tight">Finance Command</h2>
+          <h2 className="font-headline text-4xl font-bold text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.45)]">Finance Command</h2>
           <p className="text-muted-foreground text-lg">Fee splitting, debt recovery, and automated fiscal reporting.</p>
         </div>
         <div className="flex gap-3">

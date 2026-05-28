@@ -129,6 +129,7 @@ export default function AttendancePage() {
       const data = await recognizeAttendance({
         photoDataUri: photoDataUri,
         nodeId: activeCam,
+        schoolId: profile?.schoolId || undefined,
       })
       setResult(data)
 
@@ -235,7 +236,7 @@ export default function AttendancePage() {
               </Badge>
             )}
           </div>
-          <h2 className="font-headline text-3xl md:text-4xl font-bold text-white tracking-tight">
+          <h2 className="font-headline text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.45)]">
             Identity Matrix · Camera Control
           </h2>
           <p className="text-muted-foreground text-sm md:text-base max-w-2xl">

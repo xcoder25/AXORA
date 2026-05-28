@@ -7,18 +7,24 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useFirestore, useDoc } from "@/firebase"
-import { doc, setDoc, updateDoc } from "firebase/firestore"
+import { useFirestore, useDoc, useUser } from "@/firebase"
+import { doc, updateDoc } from "firebase/firestore"
+import { cn } from "@/lib/utils"
 import { 
   Settings, CreditCard, Shield, Sparkles, Check, 
-  Building, RefreshCw, Key, ShieldAlert, Cpu
+  Building, RefreshCw, Key, ShieldAlert, Cpu, Palette
 } from "lucide-react"
 
 export default function SettingsPage() {
   const db = useFirestore()
+  const { user } = useUser()
+  const { data: profile } = useDoc(user ? `users/${user.uid}` : null)
+  const { data: school, loading: schoolLoading } = useDoc(profile?.schoolId ? `schools/${profile.schoolId}` : null)
+
   const [activeTab, setActiveTab] = useState("payment")
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [selectedTheme, setSelectedTheme] = useState("dark")
 
   // Settings State Form
   const [paystackPub, setPaystackPub] = useState("")
@@ -31,25 +37,73 @@ export default function SettingsPage() {
 
   // Fetch configs
   useEffect(() => {
-    // Standard mock or placeholder to populate config state values
-    setWebhookUrl(`${window.location.origin}/api/paystack/webhook`)
-    setPaystackPub("pk_test_a9e88dbac78b65eef83a992d")
-    setPaystackSec("••••••••••••••••••••••••••••••••••••••••")
-    setInstitutionName("Axora Academy")
-    setContactEmail("finance@axora.edu")
+    if (school) {
+      setInstitutionName(school.name || "")
+      setContactEmail(school.contactEmail || "")
+      setPaystackPub(school.paystackPub || "")
+      setPaystackSec(school.paystackSec || "")
+      setCurrency(school.currency || "NGN")
+    }
+  }, [school])
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setWebhookUrl(`${window.location.origin}/api/paystack/webhook`)
+      const savedTheme = localStorage.getItem("axora-theme") || "dark"
+      setSelectedTheme(savedTheme)
+    }
   }, [])
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!profile?.schoolId || !db) return
     setSaving(true)
     setSuccess(false)
     
-    // Simulate updating gateway options block inside active school document record
-    setTimeout(() => {
-      setSaving(false)
+    try {
+      await updateDoc(doc(db, "schools", profile.schoolId), {
+        paystackPub,
+        paystackSec,
+        currency
+      })
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
-    }, 1200)
+    } catch (err) {
+      console.error("Error saving settings:", err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!profile?.schoolId || !db) return
+    setSaving(true)
+    setSuccess(false)
+    
+    try {
+      await updateDoc(doc(db, "schools", profile.schoolId), {
+        name: institutionName,
+        contactEmail: contactEmail
+      })
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err) {
+      console.error("Error saving profile:", err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleThemeChange = (newTheme: string) => {
+    setSelectedTheme(newTheme)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("axora-theme", newTheme)
+      document.body.classList.remove("theme-light", "theme-cyberpunk", "theme-solarized")
+      if (newTheme !== "dark") {
+        document.body.classList.add(`theme-${newTheme}`)
+      }
+    }
   }
 
   return (
@@ -62,16 +116,17 @@ export default function SettingsPage() {
             </Badge>
             <Shield className="h-3 w-3 text-primary animate-pulse" />
           </div>
-          <h2 className="font-headline text-4xl font-bold text-white tracking-tight">Settings</h2>
+          <h2 className="font-headline text-4xl font-bold text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.45)]">Settings</h2>
           <p className="text-muted-foreground text-lg">System node operations, security keys, and gateway credentials.</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 glass-card p-1 rounded-2xl h-12 border-white/5">
+        <TabsList className="grid w-full grid-cols-4 glass-card p-1 rounded-2xl h-12 border-white/5">
           <TabsTrigger value="payment" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5" /> Payment Gateway</TabsTrigger>
           <TabsTrigger value="institution" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> Institution Info</TabsTrigger>
           <TabsTrigger value="security" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Nodes & Security</TabsTrigger>
+          <TabsTrigger value="theme" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1.5"><Palette className="h-3.5 w-3.5" /> Theme Mode</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Payment Gateway Settings */}
@@ -162,30 +217,34 @@ export default function SettingsPage() {
 
         {/* Tab 2: Institution Settings */}
         <TabsContent value="institution" className="mt-8 space-y-6 animate-in fade-in duration-300">
-          <Card className="glass-card border-none">
-            <CardHeader className="bg-primary/10 border-b border-white/5 p-6">
-              <CardTitle className="text-xl text-white">Institution Profile Node</CardTitle>
-              <CardDescription className="text-xs">Operational identifiers and metadata parameters.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Institutional Name</Label>
-                  <Input value={institutionName} onChange={e => setInstitutionName(e.target.value)} className="bg-white/5 border-white/10 h-11 rounded-xl" />
+          <form onSubmit={handleSaveProfile}>
+            <Card className="glass-card border-none">
+              <CardHeader className="bg-primary/10 border-b border-white/5 p-6">
+                <CardTitle className="text-xl text-white">Institution Profile Node</CardTitle>
+                <CardDescription className="text-xs">Operational identifiers and metadata parameters.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Institutional Name</Label>
+                    <Input value={institutionName} onChange={e => setInstitutionName(e.target.value)} className="bg-white/5 border-white/10 h-11 rounded-xl" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Primary Support / Billing Email</Label>
+                    <Input value={contactEmail} onChange={e => setContactEmail(e.target.value)} className="bg-white/5 border-white/10 h-11 rounded-xl" />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Primary Support / Billing Email</Label>
-                  <Input value={contactEmail} onChange={e => setContactEmail(e.target.value)} className="bg-white/5 border-white/10 h-11 rounded-xl" />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="p-6 border-t border-white/5 flex justify-between items-center bg-white/3">
-              <span className="text-[9px] font-mono text-muted-foreground/60">Registry reference sync</span>
-              <Button onClick={() => alert("Settings Committed")} className="rounded-xl h-10 px-6 font-bold uppercase text-[9px] tracking-widest">
-                Save Profile
-              </Button>
-            </CardFooter>
-          </Card>
+              </CardContent>
+              <CardFooter className="p-6 border-t border-white/5 flex justify-between items-center bg-white/3">
+                <span className="text-[9px] font-mono text-muted-foreground/60">Registry reference sync</span>
+                <Button type="submit" className="rounded-xl h-10 px-6 font-bold uppercase text-[9px] tracking-widest" disabled={saving}>
+                  {saving ? <><RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" /> Saving...</> : 
+                   success ? <><Check className="mr-2 h-3.5 w-3.5" /> Saved</> : 
+                   "Save Profile"}
+                </Button>
+              </CardFooter>
+            </Card>
+          </form>
         </TabsContent>
 
         {/* Tab 3: Operational Node Status */}
@@ -208,6 +267,43 @@ export default function SettingsPage() {
                     <Badge className={cn("text-[8px] font-black uppercase mt-2 border-none", node.color)}>{node.value}</Badge>
                     <p className="text-[9px] text-muted-foreground mt-1.5">{node.desc}</p>
                   </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab 4: Workspace Theme Selection */}
+        <TabsContent value="theme" className="mt-8 space-y-6 animate-in fade-in duration-300">
+          <Card className="glass-card border-none">
+            <CardHeader className="bg-primary/10 border-b border-white/5 p-6">
+              <CardTitle className="text-xl text-white">Workspace Theme Mode</CardTitle>
+              <CardDescription className="text-xs">Select your preference for visual style, coloring, and layout density.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid gap-4 sm:grid-cols-4">
+                {[
+                  { id: "dark", name: "Deep Space (Dark)", desc: "Default neon dark dashboard", bg: "bg-[#010206] border-indigo-500/30" },
+                  { id: "light", name: "Clean Light", desc: "Crisp light indigo workspace", bg: "bg-slate-100 border-slate-300" },
+                  { id: "cyberpunk", name: "Cyberpunk", desc: "High-contrast electric pink & cyan", bg: "bg-purple-950/40 border-pink-500/30" },
+                  { id: "solarized", name: "Solarized Warm", desc: "Warm contrast developer mode", bg: "bg-[#002b36] border-yellow-500/30" }
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => handleThemeChange(t.id)}
+                    className={cn(
+                      "p-4 rounded-2xl border text-left transition-all hover:scale-[1.01] hover:bg-white/5 flex flex-col justify-between min-h-[140px]",
+                      selectedTheme === t.id ? "ring-2 ring-primary border-primary bg-primary/5" : "border-white/5 bg-white/3"
+                    )}
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-white">{t.name}</p>
+                      <p className="text-[9px] text-muted-foreground mt-1.5 leading-relaxed">{t.desc}</p>
+                    </div>
+                    <div className={cn("h-4 w-4 rounded-full border mt-3 self-end flex items-center justify-center", t.bg)}>
+                      {selectedTheme === t.id && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                    </div>
+                  </button>
                 ))}
               </div>
             </CardContent>

@@ -231,7 +231,7 @@ export default function SecurityPage() {
             </Badge>
             <Radio className="h-3 w-3 text-emerald-500 animate-pulse" />
           </div>
-          <h2 className="font-headline text-4xl font-bold text-white tracking-tight">Security Command</h2>
+          <h2 className="font-headline text-4xl font-bold text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.45)]">Security Command</h2>
           <p className="text-muted-foreground text-lg">Integrated Axis, Hikvision, Dahua, and ONVIF Telemetry Hub.</p>
         </div>
         <div className="flex gap-3">

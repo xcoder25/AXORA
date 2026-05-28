@@ -45,7 +45,7 @@ export default function PerformanceDashboard() {
             </Badge>
             <Sparkles className="h-3.5 w-3.5 text-accent animate-pulse" />
           </div>
-          <h2 className="font-headline text-4xl font-bold text-white tracking-tight">Outcome Forecasting</h2>
+          "<h2 className=\"font-headline text-4xl font-bold text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.45)]\">Outcome Forecasting</h2>"
           <p className="text-muted-foreground text-lg">Axora's neural prediction model is calculating upcoming academic benchmarks.</p>
         </div>
         <div className="flex items-center gap-3 bg-white/3 border border-white/5 p-4 rounded-2xl backdrop-blur-xl">
