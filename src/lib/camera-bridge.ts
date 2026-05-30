@@ -13,28 +13,62 @@ export type CameraStreamRequest = {
 };
 
 /**
+ * Resolved base URLs from environment variables.
+ *
+ * NEXT_PUBLIC_SURVEILLANCE_API_URL  → Cloud Run FastAPI backend
+ *   e.g. https://axora-765938782391.europe-west1.run.app
+ *
+ * NEXT_PUBLIC_GO2RTC_URL            → go2rtc WebRTC gateway (on-prem / self-hosted)
+ *   e.g. http://YOUR_GO2RTC_IP:1984   (cannot be Cloud Run — needs direct network access)
+ *
+ * Both fall back to localhost for local development.
+ */
+const SURVEILLANCE_API =
+  process.env.NEXT_PUBLIC_SURVEILLANCE_API_URL?.replace(/\/$/, '') ??
+  'http://localhost:8000';
+
+const GO2RTC_URL =
+  process.env.NEXT_PUBLIC_GO2RTC_URL?.replace(/\/$/, '') ??
+  'http://localhost:1984';
+
+/**
  * Camera bridge (UI-facing):
- * - Right now this returns a mocked stream URL.
- * - Later, we will swap this implementation to call a backend transcoder
- *   (RTSP/Hikvision/ONVIF -> WebRTC/HLS) and return the real playable URL.
+ * Resolves a camera node to a playable stream or snapshot URL.
+ * For RTSP/ONVIF/Hikvision streams: routes to go2rtc WebRTC websocket.
+ * For IP-cam snapshot polling:      routes to FastAPI /api/cameras/{id}/snapshot.
+ * For mock/dvr:                     returns a stable placeholder image.
  */
 export function resolveCameraStreamUrl({
   nodeId,
   protocol = 'mock',
 }: CameraStreamRequest): string {
-  // If the node uses live RTSP/ONVIF streaming, route it to our go2rtc Stream Gateway
+  // RTSP / ONVIF / Hikvision → go2rtc WebRTC WebSocket (must be accessible from browser)
   if (protocol === 'rtsp' || protocol === 'onvif' || protocol === 'hikvision') {
-    // go2rtc WebRTC websocket source
-    return `ws://localhost:1984/api/ws?src=${encodeURIComponent(nodeId)}`;
-  }
-  
-  // FastAPI live snapshot route
-  if (protocol === 'ip-cam') {
-    return `http://localhost:8000/api/cameras/${encodeURIComponent(nodeId)}/snapshot`;
+    const wsBase = GO2RTC_URL.replace(/^http/, 'ws');
+    return `${wsBase}/api/ws?src=${encodeURIComponent(nodeId)}`;
   }
 
-  // Placeholder stream for mock testing
+  // IP-cam → FastAPI snapshot endpoint on Cloud Run
+  if (protocol === 'ip-cam') {
+    return `${SURVEILLANCE_API}/api/cameras/${encodeURIComponent(nodeId)}/snapshot`;
+  }
+
+  // Placeholder stream for mock / DVR testing
   const seed = `${nodeId}:${protocol}`;
   return `https://picsum.photos/seed/${encodeURIComponent(seed)}/1200/800`;
 }
 
+/**
+ * Returns the base URL for direct REST calls to the surveillance backend.
+ * Use this for camera CRUD, health checks, PTZ, etc.
+ */
+export const surveillanceApiUrl = SURVEILLANCE_API;
+
+/**
+ * Returns the WebSocket URL for AI event telemetry from the backend.
+ * Connect to this to receive real-time YOLO detection events.
+ */
+export function getSurveillanceWsUrl(): string {
+  const wsBase = SURVEILLANCE_API.replace(/^http/, 'ws');
+  return `${wsBase}/ws/events`;
+}

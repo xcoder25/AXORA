@@ -40,7 +40,11 @@ export function WebRTCCamera({ cameraId, location, fallbackImage, detections = [
         pc.addTransceiver("audio", { direction: "recvonly" });
 
         // Connect to go2rtc WebRTC WebSocket API
-        const wsUrl = `ws://localhost:1984/api/ws?src=${encodeURIComponent(cameraId)}`;
+        // NEXT_PUBLIC_GO2RTC_URL must be set to your go2rtc server (e.g. http://YOUR_IP:1984)
+        const go2rtcBase = (process.env.NEXT_PUBLIC_GO2RTC_URL ?? 'http://localhost:1984')
+          .replace(/\/$/, '')
+          .replace(/^http/, 'ws');
+        const wsUrl = `${go2rtcBase}/api/ws?src=${encodeURIComponent(cameraId)}`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
