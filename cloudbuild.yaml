@@ -1,0 +1,48 @@
+steps:
+  # Step 1: Build the Docker image from the surveillance-backend subdirectory
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/axora-surveillance:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/axora-surveillance:latest'
+      - '-f'
+      - 'surveillance-backend/Dockerfile'
+      - 'surveillance-backend'
+
+  # Step 2: Push the image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/axora-surveillance'
+
+  # Step 3: Deploy to Cloud Run — binds to PORT=8080 via env var injection
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Deploy'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'axora'
+      - '--image=gcr.io/$PROJECT_ID/axora-surveillance:$COMMIT_SHA'
+      - '--region=europe-west1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8080'
+      - '--min-instances=0'
+      - '--max-instances=2'
+      - '--memory=2Gi'
+      - '--cpu=2'
+      - '--timeout=300'
+
+images:
+  - 'gcr.io/$PROJECT_ID/axora-surveillance:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/axora-surveillance:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
