@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { initializeFirebase, FirebaseClientProvider } from '@/firebase';
 import { AppSplashScreen } from '@/components/app-splash-screen';
 import { AppGuideScreen } from '@/components/app-guide-screen';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const { firebaseApp, firestore, auth } = initializeFirebase();
 
@@ -16,39 +17,28 @@ export default function RootClient({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const timer = setTimeout(() => {
       setBooting(false);
-      // Check if the onboarding guide has been seen yet
       const guideSeen = localStorage.getItem('axora-guide-seen');
-      if (!guideSeen) {
-        setShowGuide(true);
-      }
+      if (!guideSeen) setShowGuide(true);
     }, SPLASH_MIN_MS);
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('axora-theme') || 'dark';
-    document.body.classList.remove('theme-light', 'theme-cyberpunk', 'theme-solarized');
-    if (savedTheme !== 'dark') {
-      document.body.classList.add(`theme-${savedTheme}`);
-    }
-  }, []);
-
   return (
-    <FirebaseClientProvider firebaseApp={firebaseApp} firestore={firestore} auth={auth}>
-      {booting ? (
-        <AppSplashScreen status="Starting Axora OS" />
-      ) : showGuide ? (
-        <AppGuideScreen
-          onComplete={() => {
-            localStorage.setItem('axora-guide-seen', 'true');
-            setShowGuide(false);
-          }}
-        />
-      ) : (
-        children
-      )}
-    </FirebaseClientProvider>
+    <ThemeProvider>
+      <FirebaseClientProvider firebaseApp={firebaseApp} firestore={firestore} auth={auth}>
+        {booting ? (
+          <AppSplashScreen status="Starting Axora OS" />
+        ) : showGuide ? (
+          <AppGuideScreen
+            onComplete={() => {
+              localStorage.setItem('axora-guide-seen', 'true');
+              setShowGuide(false);
+            }}
+          />
+        ) : (
+          children
+        )}
+      </FirebaseClientProvider>
+    </ThemeProvider>
   );
 }
-
-

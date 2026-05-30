@@ -34,7 +34,8 @@
     --sidebar-ring: 263.4 70% 50.4%;
   }
 
-  .theme-light {
+  /* Apply theme vars to html so they cascade to body+all children */
+  html.theme-light, body.theme-light {
     --background: 0 0% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
@@ -62,7 +63,7 @@
     --sidebar-ring: 239 84% 67%;
   }
 
-  .theme-cyberpunk {
+  html.theme-cyberpunk, body.theme-cyberpunk {
     --background: 280 100% 3%;
     --foreground: 180 100% 50%;
     --card: 280 100% 5%;
@@ -90,7 +91,7 @@
     --sidebar-ring: 320 100% 50%;
   }
 
-  .theme-solarized {
+  html.theme-solarized, body.theme-solarized {
     --background: 192 100% 6%;
     --foreground: 44 87% 85%;
     --card: 192 100% 8%;
@@ -124,14 +125,14 @@
     @apply border-border;
   }
   body {
-    @apply bg-[#010206] text-foreground font-body antialiased min-h-screen relative overflow-x-hidden;
+    @apply bg-background text-foreground font-body antialiased min-h-screen relative overflow-x-hidden;
   }
   
   /* Deep Base Layer */
   body::before {
     content: "";
-    @apply fixed inset-0 -z-20;
-    background: radial-gradient(circle at center, #030712 0%, #000000 100%);
+    @apply fixed inset-0 -z-20 transition-all duration-500;
+    background: radial-gradient(circle at center, hsl(var(--background)) 0%, hsl(var(--background) / 0.9) 100%);
   }
 
   /* Fluid Ocean Mixed Animation */
@@ -226,35 +227,21 @@
     animation: gold-sweep 3s infinite ease-in-out;
   }
 
-  /* Dashboard — white + indigo glass interior */
+  /* Dashboard — interior glass theme wrapper */
   .dashboard-shell {
-    --background: 0 0% 99%;
-    --foreground: 224 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 47% 11%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --muted: 226 100% 97%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 239 84% 67%;
-    --accent-foreground: 0 0% 100%;
-    --border: 226 93% 94%;
-    --ring: 239 84% 67%;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 224 47% 11%;
-    --sidebar-primary: 239 84% 67%;
-    --sidebar-border: 226 93% 94%;
     color: hsl(var(--foreground));
     background: hsl(var(--background));
+    transition: background-color 0.5s ease, color 0.5s ease;
   }
 
   .dashboard-mesh {
     background:
-      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(99, 102, 241, 0.18), transparent 50%),
-      radial-gradient(ellipse 60% 40% at 90% 10%, rgba(129, 140, 248, 0.14), transparent 45%),
-      radial-gradient(ellipse 50% 30% at 50% 100%, rgba(165, 180, 252, 0.12), transparent 50%),
-      linear-gradient(180deg, #fafbff 0%, #f5f7ff 50%, #ffffff 100%);
+      radial-gradient(ellipse 80% 50% at 10% -10%, hsl(var(--primary) / 0.15), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 90% 10%, hsl(var(--accent) / 0.12), transparent 45%),
+      radial-gradient(ellipse 50% 30% at 50% 100%, hsl(var(--primary) / 0.08), transparent 50%),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.95) 50%, hsl(var(--background)) 100%);
     animation: dashboard-mesh-shift 18s ease-in-out infinite alternate;
+    transition: background-color 0.5s ease;
   }
 
   .glass-panel-light {

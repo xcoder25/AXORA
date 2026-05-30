@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatRoleLabel, isAdminRole } from '@/lib/roles';
 import { AppSplashScreen } from '@/components/app-splash-screen';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { AxiomAssistant } from '@/components/axiom-assistant';
 
 function MissingProfileScreen({ user, onLogout }: { user: FirebaseUser; onLogout: () => void }) {
   return (
@@ -67,32 +69,33 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         schoolName={school?.name}
       />
       <SidebarInset className="relative flex min-h-screen flex-col bg-transparent">
-        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-indigo-100/80 bg-white/70 px-6 shadow-sm backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-500">
-          <SidebarTrigger className="-ml-1 text-slate-500 transition-colors hover:text-indigo-600" />
-          <Separator orientation="vertical" className="mx-2 h-4 bg-indigo-100" />
+        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-border/80 bg-card/70 px-6 shadow-sm backdrop-blur-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-2 duration-500">
+          <SidebarTrigger className="-ml-1 text-muted-foreground transition-colors hover:text-primary" />
+          <Separator orientation="vertical" className="mx-2 h-4 bg-border/60" />
           <div className="flex flex-1 items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 border border-indigo-100 shadow-sm transition-transform hover:scale-105">
-                <Building className="h-4 w-4 text-indigo-600" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 shadow-sm transition-transform hover:scale-105">
+                <Building className="h-4 w-4 text-primary" />
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-sm leading-none text-slate-900">
+                <span className="font-bold text-sm leading-none text-foreground">
                   {school?.name || 'Institution'}
                 </span>
-                <span className="mt-1 text-[9px] font-semibold uppercase tracking-widest text-indigo-500/80">
+                <span className="mt-1 text-[9px] font-semibold uppercase tracking-widest text-primary/80">
                   {profile.schoolId}
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <ThemeToggle compact />
               <div className="hidden text-right sm:block">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                <p className="text-xs font-bold uppercase tracking-wider text-foreground">
                   {profile.displayName || user.email?.split('@')[0]}
                 </p>
                 <p
                   className={cn(
                     'text-[9px] font-bold uppercase tracking-wider',
-                    isAdminRole(userRole) ? 'text-indigo-600' : 'text-slate-500'
+                    isAdminRole(userRole) ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
                   {roleLabel}
@@ -102,7 +105,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 variant="ghost"
                 size="icon"
                 onClick={handleLogout}
-                className="h-9 w-9 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600"
+                className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -113,6 +116,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-700 fill-mode-both">
             {children}
           </div>
+          <AxiomAssistant />
           <footer className="mt-auto flex items-center justify-between border-t border-indigo-100/80 pt-6 pb-2 text-slate-400">
             <p className="text-[9px] font-semibold uppercase tracking-widest">
               &copy; {new Date().getFullYear()} {school?.name || 'Axora'}

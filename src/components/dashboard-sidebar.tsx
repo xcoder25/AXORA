@@ -75,7 +75,7 @@ export function DashboardSidebar({
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-indigo-100/90 bg-white/75 backdrop-blur-2xl shadow-[4px_0_24px_rgba(79,70,229,0.06)]"
+      className="border-r border-sidebar-border bg-sidebar-background/75 backdrop-blur-2xl transition-all duration-300 shadow-[4px_0_24px_rgba(0,0,0,0.15)]"
     >
       <SidebarHeader className="px-4 py-6">
         <div className="flex items-center gap-3">
@@ -95,10 +95,10 @@ export function DashboardSidebar({
             )}
           </div>
           <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <span className="truncate font-bold text-sm tracking-tight text-slate-900">
+            <span className="truncate font-bold text-sm tracking-tight text-sidebar-foreground">
               {schoolName || "Axora"}
             </span>
-            <span className="text-[8px] font-bold uppercase tracking-widest text-indigo-500">
+            <span className="text-[8px] font-bold uppercase tracking-widest text-sidebar-primary">
               Institutional OS
             </span>
           </div>
@@ -107,7 +107,7 @@ export function DashboardSidebar({
 
       <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="mb-2 px-3 text-[9px] font-bold uppercase tracking-widest text-indigo-400/90">
+          <SidebarGroupLabel className="mb-2 px-3 text-[9px] font-bold uppercase tracking-widest text-sidebar-foreground/60">
             Navigation
           </SidebarGroupLabel>
           <SidebarMenu className="gap-1">
@@ -124,15 +124,15 @@ export function DashboardSidebar({
                   className={cn(
                     "h-10 rounded-xl px-3 transition-all duration-300",
                     pathname === item.url
-                      ? "bg-indigo-600 text-white shadow-indigo-md hover:bg-indigo-600 hover:text-white"
-                      : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
                   <Link href={item.url} className="flex items-center gap-3">
                     <item.icon
                       className={cn(
                         "h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-110",
-                        pathname === item.url ? "text-white" : "text-indigo-400"
+                        pathname === item.url ? "text-sidebar-primary-foreground" : "text-sidebar-primary"
                       )}
                     />
                     <span className="font-semibold text-[10px] uppercase tracking-wider">
@@ -149,7 +149,7 @@ export function DashboardSidebar({
       <SidebarFooter className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="h-10 rounded-xl px-3 text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-700">
+            <SidebarMenuButton asChild className="h-10 rounded-xl px-3 text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
               <Link href="/dashboard/settings" className="flex items-center gap-3">
                 <Settings className="h-4 w-4" />
                 <span className="font-semibold text-[10px] uppercase tracking-wider">Settings</span>
