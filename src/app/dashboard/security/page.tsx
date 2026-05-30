@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { WebRTCCamera } from "@/components/ui/webrtc-camera"
+import { surveillanceApiUrl, getSurveillanceWsUrl } from "@/lib/camera-bridge"
 import { 
   Video, 
   ShieldAlert, 
@@ -61,7 +62,7 @@ export default function SecurityPage() {
   // Fetch registered cameras and health status
   const fetchCameras = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/cameras")
+      const res = await fetch(`${surveillanceApiUrl}/api/cameras`)
       if (res.ok) {
         const data = await res.json()
         setCameras(data)
@@ -83,7 +84,7 @@ export default function SecurityPage() {
 
   const fetchHealth = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/cameras/health")
+      const res = await fetch(`${surveillanceApiUrl}/api/cameras/health`)
       if (res.ok) {
         const data = await res.json()
         setHealth(data)
@@ -115,7 +116,7 @@ export default function SecurityPage() {
     
     const connectWS = () => {
       try {
-        ws = new WebSocket("ws://localhost:8000/ws/events")
+        ws = new WebSocket(getSurveillanceWsUrl())
         
         ws.onmessage = (event) => {
           try {
@@ -149,7 +150,7 @@ export default function SecurityPage() {
   // PTZ continuous / relative triggers
   const executePTZ = async (pan: number, tilt: number, zoom: number) => {
     try {
-      await fetch(`http://localhost:8000/api/cameras/${activeCamId}/ptz`, {
+      await fetch(`${surveillanceApiUrl}/api/cameras/${activeCamId}/ptz`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pan, tilt, zoom })
@@ -163,7 +164,7 @@ export default function SecurityPage() {
   const handleScan = async () => {
     setScanning(true)
     try {
-      const res = await fetch("http://localhost:8000/api/cameras/discovery")
+      const res = await fetch(`${surveillanceApiUrl}/api/cameras/discovery`)
       if (res.ok) {
         const data = await res.json()
         setDiscoveryResults(data)
@@ -191,7 +192,7 @@ export default function SecurityPage() {
         password: linkPass
       }
       
-      const res = await fetch("http://localhost:8000/api/cameras", {
+      const res = await fetch(`${surveillanceApiUrl}/api/cameras`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -388,7 +389,7 @@ export default function SecurityPage() {
                         className="text-[9px] font-mono border border-white/10 rounded-xl px-3 py-1 bg-white/3 hover:bg-white/5"
                         onClick={async () => {
                           try {
-                            await fetch(`http://localhost:8000/api/cameras/${activeCamId}/ptz`, {
+                            await fetch(`${surveillanceApiUrl}/api/cameras/${activeCamId}/ptz`, {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ preset_id: String(i + 1) })
@@ -627,7 +628,7 @@ export default function SecurityPage() {
                                 className="text-[9px] text-red-500 hover:text-red-400 font-bold uppercase tracking-wider"
                                 onClick={async () => {
                                   try {
-                                    await fetch(`http://localhost:8000/api/cameras/${node.id}`, { method: "DELETE" })
+                                    await fetch(`${surveillanceApiUrl}/api/cameras/${node.id}`, { method: "DELETE" })
                                     await fetchCameras()
                                   } catch (e) {}
                                 }}
