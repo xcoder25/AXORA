@@ -22,6 +22,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { askAxoraAdmin } from '@/ai/flows/axora-institutional-intelligence';
 import { formatRoleLabel, isAdminRole } from '@/lib/roles';
+import { CampusNoticeBoard } from '@/components/campus-notice-board';
+import { startAxoraLoading, stopAxoraLoading } from '@/lib/axora-loading';
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -44,6 +46,7 @@ export default function DashboardPage() {
     e.preventDefault();
     if (!adminQuery) return;
     setLoading(true);
+    startAxoraLoading('Running institutional intelligence…');
     try {
       const result = await askAxoraAdmin({
         query: adminQuery,
@@ -61,6 +64,7 @@ export default function DashboardPage() {
       console.error(e);
     } finally {
       setLoading(false);
+      stopAxoraLoading();
     }
   }
 
@@ -187,6 +191,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-7">
+        <div className="lg:col-span-7">
+          <CampusNoticeBoard schoolId={profile?.schoolId as string | undefined} compact />
+        </div>
+
         <Card className="glass-card-light border-none lg:col-span-4 shadow-none">
           <CardHeader className="border-b border-indigo-50 pb-6">
             <div className="flex items-center justify-between">

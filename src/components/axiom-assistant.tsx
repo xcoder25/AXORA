@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useUser, useDoc } from '@/firebase';
 import { processVoiceCommand, type VoiceCommandOutput } from '@/ai/flows/axora-voice-command';
 import { isAdminRole } from '@/lib/roles';
+import { useFinanceData } from '@/hooks/use-finance-data';
+import { parseFinanceActionFromAi, dispatchFinanceAction } from '@/lib/axiom-finance-actions';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +60,8 @@ export function AxiomAssistant() {
   const router = useRouter();
   const { user } = useUser();
   const { data: profile } = useDoc(user ? `users/${user.uid}` : null);
+  const { data: school } = useDoc(profile?.schoolId ? `schools/${profile.schoolId}` : null);
+  const { snapshot } = useFinanceData(open ? (profile?.schoolId as string | undefined) : undefined);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -96,7 +100,7 @@ export function AxiomAssistant() {
           !trial.subscribed
             ? `You have **${trial.daysLeft} day${trial.daysLeft !== 1 ? 's' : ''}** left on your free trial.`
             : ''
-        } Try: "Show me finance overview" or "Enroll a new student".`,
+        } Try: "Show outstanding debt", "Export the ledger", or "Record a $500 expense".`,
       }]);
     }
   }, [open]);
@@ -114,9 +118,32 @@ export function AxiomAssistant() {
         command: text,
         conversationHistory: history,
         schoolContext: {
-          schoolName: profile?.schoolId || '',
+          schoolName: (school?.name as string) || profile?.schoolId || '',
+          revenueCollectionRate: Math.round(snapshot.collectionRate),
+          pendingInvoices: snapshot.debtStudentsCount,
+          financeSnapshot: {
+            totalRevenue: snapshot.totalRevenue,
+            totalExpected: snapshot.totalExpected,
+            outstandingDebt: snapshot.outstandingDebt,
+            netPosition: snapshot.netPosition,
+            expenseTotal: snapshot.expenseTotal,
+            transactionVolume: snapshot.transactionVolume,
+            paidStudents: snapshot.paidStudentsCount,
+            partialStudents: snapshot.partialCount,
+            pendingStudents: snapshot.pendingCount,
+            aging: snapshot.aging,
+            topDebtors: snapshot.topDebtors,
+          },
         },
       });
+
+      const financeAction = parseFinanceActionFromAi(result.data);
+      if (financeAction) {
+        dispatchFinanceAction(financeAction);
+        if (result.navigateTo?.includes('finance') || financeAction.type !== 'switch_tab') {
+          router.push('/dashboard/finance');
+        }
+      }
 
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -136,7 +163,7 @@ export function AxiomAssistant() {
     } finally {
       setLoading(false);
     }
-  }, [loading, messages, profile, trial.expired]);
+  }, [loading, messages, profile, school, snapshot, trial.expired, router]);
 
   const startListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;

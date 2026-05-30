@@ -14,3 +14,11 @@ export function formatRoleLabel(role?: string | null): string {
 export function isAdminRole(role?: string | null): boolean {
   return role === 'admin';
 }
+
+export function isStaffRole(role?: string | null): boolean {
+  return role === 'admin' || role === 'teacher';
+}
+
+export function isParentOrStudentRole(role?: string | null): boolean {
+  return role === 'parent' || role === 'student';
+}

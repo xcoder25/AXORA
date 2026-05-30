@@ -76,7 +76,22 @@ service cloud.firestore {
     }
 
     match /announcements/{annId} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn()
+        && resource.data.schoolId == callerSchoolId();
+      allow create: if isSchoolStaff()
+        && request.resource.data.schoolId == callerSchoolId();
+      allow update, delete: if isSchoolStaff()
+        && resource.data.schoolId == callerSchoolId();
+    }
+
+    match /finance_transactions/{txId} {
+      allow create: if isSignedIn()
+        && request.resource.data.schoolId == callerSchoolId()
+        && request.resource.data.studentId == request.auth.uid;
+      allow read: if isSignedIn()
+        && (resource.data.studentId == request.auth.uid
+          || (isSchoolStaff() && resource.data.schoolId == callerSchoolId()));
+      allow update, delete: if false;
     }
   }
 }

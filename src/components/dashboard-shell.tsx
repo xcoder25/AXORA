@@ -14,6 +14,7 @@ import { formatRoleLabel, isAdminRole } from '@/lib/roles';
 import { AppSplashScreen } from '@/components/app-splash-screen';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AxiomAssistant } from '@/components/axiom-assistant';
+import { ActionLoaderOverlay } from '@/components/action-loader-overlay';
 
 function MissingProfileScreen({ user, onLogout }: { user: FirebaseUser; onLogout: () => void }) {
   return (
@@ -39,6 +40,26 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [navProgress, setNavProgress] = useState(0);
   const [navLoading, setNavLoading] = useState(false);
+  const [axoraLoading, setAxoraLoading] = useState(false);
+  const [axoraMessage, setAxoraMessage] = useState<string | undefined>();
+
+  useEffect(() => {
+    const onStart = (e: Event) => {
+      const detail = (e as CustomEvent<{ message?: string }>).detail;
+      setAxoraLoading(true);
+      setAxoraMessage(detail?.message);
+    };
+    const onStop = () => {
+      setAxoraLoading(false);
+      setAxoraMessage(undefined);
+    };
+    window.addEventListener('axora-loading-start', onStart);
+    window.addEventListener('axora-loading-stop', onStop);
+    return () => {
+      window.removeEventListener('axora-loading-start', onStart);
+      window.removeEventListener('axora-loading-stop', onStop);
+    };
+  }, []);
 
   useEffect(() => {
     if (navLoading) {
@@ -104,6 +125,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider className="dashboard-shell min-h-screen">
+      <ActionLoaderOverlay
+        active={navLoading || axoraLoading}
+        message={axoraMessage || (navLoading ? 'Loading page…' : 'Processing…')}
+        schoolLogo={school?.logoUrl}
+        schoolName={school?.name}
+      />
       {navLoading && (
         <div 
           className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-primary via-violet-500 to-pink-500 z-[9999] transition-all duration-300 ease-out shadow-[0_0_15px_rgba(139,92,246,0.8)]"
