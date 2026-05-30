@@ -52,8 +52,16 @@ service cloud.firestore {
       allow get: if isSelf(userId)
         || (isSchoolStaff() && isSameSchoolAsCaller());
       allow list: if isSchoolStaff() && isSameSchoolAsCaller();
-      allow create: if isSelf(userId)
-        && request.resource.data.uid == userId;
+
+      // Self sign-up (e.g. parent portal) OR admin enrolling a new student/teacher
+      allow create: if
+        // Normal self sign-up
+        (isSelf(userId) && request.resource.data.uid == userId)
+        // Admin enrolling a student or teacher under their school
+        || (isSchoolStaff()
+            && request.resource.data.schoolId == callerSchoolId()
+            && request.resource.data.uid == userId);
+
       allow update: if isSelf(userId)
         || (isSchoolStaff() && isSameSchoolAsCaller());
       allow delete: if false;
@@ -77,6 +85,18 @@ service cloud.firestore {
 
     match /announcements/{annId} {
       allow read, write: if isSignedIn();
+    }
+
+    // Outbox: email dispatch audit log written by admins/teachers
+    match /outbox/{docId} {
+      allow create: if isSchoolStaff();
+      allow read: if isSchoolStaff();
+      allow update, delete: if false;
+    }
+
+    // Camera registry (surveillance backend)
+    match /cameras/{cameraId} {
+      allow read, write: if isSchoolStaff();
     }
   }
 }

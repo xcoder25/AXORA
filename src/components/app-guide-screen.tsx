@@ -49,7 +49,6 @@ export function AppGuideScreen({ onComplete }: AppGuideScreenProps) {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(timer);
-          onComplete();
           return 100;
         }
         const nextProgress = prev + increment;
@@ -66,7 +65,13 @@ export function AppGuideScreen({ onComplete }: AppGuideScreenProps) {
     }, intervalTime);
 
     return () => clearInterval(timer);
-  }, [onComplete]);
+  }, []);
+
+  useEffect(() => {
+    if (progress >= 100) {
+      onComplete();
+    }
+  }, [progress, onComplete]);
 
   const slide = onboardingSlides[activeSlide];
   const Icon = slide.icon;

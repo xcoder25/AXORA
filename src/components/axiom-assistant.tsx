@@ -68,9 +68,6 @@ export function AxiomAssistant() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Only show for admins
-  if (!isAdminRole(profile?.role)) return null;
-
   // Refresh trial on open
   useEffect(() => {
     if (open) setTrial(getTrialStatus());
@@ -173,6 +170,9 @@ export function AxiomAssistant() {
     router.push(path);
     setOpen(false);
   };
+
+  // Only show for admins
+  if (!isAdminRole(profile?.role)) return null;
 
   return (
     <>

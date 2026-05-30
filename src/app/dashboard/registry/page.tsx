@@ -21,6 +21,9 @@ import {
 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase"
 import { collection, query, where, doc, setDoc } from "firebase/firestore"
+import { initializeApp, getApps, deleteApp } from "firebase/app"
+import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth"
+import { firebaseConfig } from "@/firebase/config"
 import { 
   Dialog, 
   DialogContent, 
@@ -31,12 +34,37 @@ import {
   DialogFooter
 } from "@/components/ui/dialog"
 
+// ── Auth & Password Helpers ──────────────────────────────────────────────────
+const generatePassword = () => {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%"
+  let pass = "Axora@"
+  for (let i = 0; i < 8; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return pass
+}
+
+async function createAuthUser(email: string, password: string): Promise<string> {
+  const appName = `temp-auth-app-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  const tempApp = initializeApp(firebaseConfig, appName);
+  const tempAuth = getAuth(tempApp);
+  try {
+    const userCredential = await createUserWithEmailAndPassword(tempAuth, email, password);
+    const uid = userCredential.user.uid;
+    await signOut(tempAuth);
+    return uid;
+  } finally {
+    await deleteApp(tempApp);
+  }
+}
+
 export default function StudentRegistryPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeRegistryTab, setActiveRegistryTab] = useState<"student" | "teacher">("student")
   const db = useFirestore()
   const { user } = useUser()
   const { data: profile } = useDoc(user ? `users/${user.uid}` : null)
+  const { data: schoolDoc } = useDoc(profile?.schoolId ? `schools/${profile.schoolId}` : null)
 
   // Queries
   const studentsQuery = useMemoFirebase(() => {
@@ -79,6 +107,16 @@ export default function StudentRegistryPage() {
   const [salary, setSalary] = useState("4000")
   const [status, setStatus] = useState("Active")
   const [enrolling, setEnrolling] = useState(false)
+  const [password, setPassword] = useState("")
+  const [generatedCredentials, setGeneratedCredentials] = useState<{ displayName: string; email: string; password: string; role: string }[]>([])
+  const [showCredentialsDialog, setShowCredentialsDialog] = useState(false)
+
+  // Pre-generate password when modal opens
+  useEffect(() => {
+    if (enrollOpen) {
+      setPassword(generatePassword())
+    }
+  }, [enrollOpen])
 
   // Webcam Capture States
   const [webcamActive, setWebcamActive] = useState(false)
@@ -187,17 +225,23 @@ export default function StudentRegistryPage() {
   }
 
   // Bulk enrollment submission
-  const executeBulkEnrollment = async (items: { displayName: string; email: string; field: string; metric: string }[]) => {
+  const executeBulkEnrollment = async (items: { displayName: string; email: string; field: string; metric: string }[], isDemo: boolean = false) => {
     if (!profile?.schoolId || !db || items.length === 0) return
     setEnrolling(true)
     setBulkStatus(`Enrolling ${items.length} records...`)
     
+    const creds: typeof generatedCredentials = []
+    
     try {
       let count = 0
       for (const item of items) {
-        const docRef = doc(collection(db, "users"))
+        const pass = isDemo ? "Demo@12345" : generatePassword()
+        setBulkStatus(`Creating Auth account for ${item.displayName}...`)
+        const authUid = await createAuthUser(item.email, pass)
+        
+        const docRef = doc(db, "users", authUid)
         const payload: any = {
-          uid: docRef.id,
+          uid: authUid,
           displayName: item.displayName,
           email: item.email,
           role: activeRegistryTab,
@@ -216,10 +260,19 @@ export default function StudentRegistryPage() {
         }
         
         await setDoc(docRef, payload)
+        
+        creds.push({
+          displayName: item.displayName,
+          email: item.email,
+          password: pass,
+          role: activeRegistryTab
+        })
+        
         count++
         setBulkStatus(`Successfully enrolled ${count}/${items.length}...`)
       }
       
+      setGeneratedCredentials(creds)
       setBulkStatus("Done!")
       setTimeout(() => {
         setBulkStatus(null)
@@ -227,10 +280,11 @@ export default function StudentRegistryPage() {
         setParsedNlpList([])
         setParsedCsvList([])
         setEnrollOpen(false)
+        setShowCredentialsDialog(true)
       }, 1000)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error with bulk enrollment:", err)
-      alert("Failed during bulk enrollment process.")
+      alert(err?.message || "Failed during bulk enrollment process.")
     } finally {
       setEnrolling(false)
     }
@@ -293,9 +347,13 @@ export default function StudentRegistryPage() {
     setEnrolling(true)
 
     try {
-      const docRef = doc(collection(db, "users"))
+      // 1. Create account in Firebase Auth
+      const authUid = await createAuthUser(email, password)
+
+      // 2. Save user document in Firestore with the authUid as the document ID
+      const docRef = doc(db, "users", authUid)
       const payload: any = {
-        uid: docRef.id,
+        uid: authUid,
         displayName: fullName,
         email: email,
         role: activeRegistryTab,
@@ -315,6 +373,13 @@ export default function StudentRegistryPage() {
 
       await setDoc(docRef, payload)
       
+      setGeneratedCredentials([{
+        displayName: fullName,
+        email: email,
+        password: password,
+        role: activeRegistryTab
+      }])
+      
       // Reset form states
       setFullName("")
       setEmail("")
@@ -325,9 +390,10 @@ export default function StudentRegistryPage() {
       setStatus("Active")
       setCapturedPhoto(null)
       setEnrollOpen(false)
-    } catch (err) {
+      setShowCredentialsDialog(true)
+    } catch (err: any) {
       console.error("Error enrolling member:", err)
-      alert("Failed to enroll member")
+      alert(err?.message || "Failed to enroll member")
     } finally {
       setEnrolling(false)
     }
@@ -339,6 +405,95 @@ export default function StudentRegistryPage() {
       stopWebcam()
     }
   }, [enrollOpen])
+
+  const downloadCredentialsCsv = () => {
+    if (generatedCredentials.length === 0) return
+    const headers = "Name,Email,Password,Role\n"
+    const rows = generatedCredentials.map(c => 
+      `"${c.displayName}","${c.email}","${c.password}","${c.role}"`
+    ).join("\n")
+    
+    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", `axora-credentials-${activeRegistryTab}-${Date.now()}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const copyAllCredentials = () => {
+    if (generatedCredentials.length === 0) return
+    const text = generatedCredentials.map(c => 
+      `Name: ${c.displayName}\nEmail: ${c.email}\nPassword: ${c.password}\nRole: ${c.role}\n-------------------------`
+    ).join("\n")
+    navigator.clipboard.writeText(text)
+    alert("All credentials copied to clipboard!")
+  }
+
+  const triggerMailTo = (name: string, email: string, pass: string, role: string) => {
+    const schoolName = schoolDoc?.name || profile?.schoolId || "Your Institution"
+    const schoolShortName = schoolDoc?.shortName || schoolName
+    const schoolMotto = schoolDoc?.motto ? `"${schoolDoc.motto}"` : ""
+    const schoolEmail = schoolDoc?.contact?.officialEmail || ""
+    const schoolCity = schoolDoc?.location?.city || ""
+    const schoolCountry = schoolDoc?.location?.country || ""
+    const schoolLocation = [schoolCity, schoolCountry].filter(Boolean).join(", ")
+    const roleLabel = role === "student" ? "Student" : "Faculty Member"
+    const portalUrl = window.location.origin + "/login"
+
+    const subject = encodeURIComponent(
+      `${schoolName} — Your Portal Access Credentials`
+    )
+
+    const body = encodeURIComponent(
+      `Dear ${name},\n\n` +
+      `On behalf of the administration and faculty of ${schoolName}${schoolLocation ? ` (${schoolLocation})` : ""}, we are pleased to extend you a formal welcome as a new ${roleLabel} in our institution.\n\n` +
+      (schoolMotto ? `${schoolMotto}\n\n` : "") +
+      `As part of your onboarding, your institutional portal account has been created. ` +
+      `Please use the login credentials below to access your personalised ${roleLabel.toLowerCase()} dashboard:\n\n` +
+      `────────────────────────────────\n` +
+      `  PORTAL ACCESS DETAILS\n` +
+      `────────────────────────────────\n` +
+      `  Portal:    ${portalUrl}\n` +
+      `  Email:     ${email}\n` +
+      `  Password:  ${pass}\n` +
+      `  Role:      ${roleLabel}\n` +
+      `────────────────────────────────\n\n` +
+      `For security purposes, you are advised to update your password upon your first sign-in via Profile Settings.\n\n` +
+      `Should you experience any difficulty accessing your account, please contact the Academic Office` +
+      (schoolEmail ? ` at ${schoolEmail}` : "") + ` and we will assist you promptly.\n\n` +
+      `We look forward to a productive and enriching academic journey with you.\n\n` +
+      `Yours faithfully,\n` +
+      `Office of Academic Administration\n` +
+      `${schoolName}\n` +
+      (schoolLocation ? `${schoolLocation}\n` : "") +
+      `\n` +
+      `─────────────────────────────────────────────────\n` +
+      `This communication was generated securely via Axora OS — Institutional Intelligence Infrastructure.\n` +
+      `Axora OS is the academic management system powering ${schoolShortName}'s portal operations.\n` +
+      `─────────────────────────────────────────────────`
+    )
+
+    // Log to audit outbox in Firestore
+    if (db) {
+      import("firebase/firestore").then(({ collection, addDoc }) => {
+        addDoc(collection(db, "outbox"), {
+          to: email,
+          recipientName: name,
+          subject: `${schoolName} — Your Portal Access Credentials`,
+          role: role,
+          schoolId: profile?.schoolId,
+          status: "Sent",
+          sentAt: new Date().toISOString()
+        }).catch(err => console.error("Error logging to outbox:", err))
+      })
+    }
+
+    // Open local email client
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -423,16 +578,22 @@ export default function StudentRegistryPage() {
                           </div>
                         )}
 
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Status</label>
-                          <select
-                            value={status}
-                            onChange={e => setStatus(e.target.value)}
-                            className="flex h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                          >
-                            <option value="Active" className="bg-slate-900">Active</option>
-                            <option value="On Leave" className="bg-slate-900">On Leave</option>
-                          </select>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Login Password</label>
+                            <Input required value={password} onChange={e => setPassword(e.target.value)} placeholder="Auto-generated secure password" className="bg-white/5 border-white/10 rounded-xl text-white font-mono text-xs" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Status</label>
+                            <select
+                              value={status}
+                              onChange={e => setStatus(e.target.value)}
+                              className="flex h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            >
+                              <option value="Active" className="bg-slate-900">Active</option>
+                              <option value="On Leave" className="bg-slate-900">On Leave</option>
+                            </select>
+                          </div>
                         </div>
 
                         {/* Biometric webcam photo snapper & upload */}
@@ -781,6 +942,80 @@ export default function StudentRegistryPage() {
           </CardContent>
         </Card>
       </Tabs>
+
+      {/* ── Credentials Display Dialog ────────────────── */}
+      <Dialog open={showCredentialsDialog} onOpenChange={setShowCredentialsDialog}>
+        <DialogContent className="glass-card border-white/10 text-white max-w-2xl rounded-3xl font-body">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-white flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-indigo-400 animate-pulse" />
+              Credentials Generated Successfully
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Institutional portal logins have been registered in Firebase Authentication and Firestore. Share these with the respective members.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            <div className="max-h-[260px] overflow-y-auto rounded-2xl border border-white/10 bg-black/30 p-2">
+              <Table>
+                <TableHeader className="bg-white/5 sticky top-0 z-10">
+                  <TableRow className="border-white/5">
+                    <TableHead className="text-white/60 font-bold uppercase tracking-wider text-[9px]">Name</TableHead>
+                    <TableHead className="text-white/60 font-bold uppercase tracking-wider text-[9px]">Email</TableHead>
+                    <TableHead className="text-white/60 font-bold uppercase tracking-wider text-[9px]">Password</TableHead>
+                    <TableHead className="text-white/60 font-bold uppercase tracking-wider text-[9px]">Role</TableHead>
+                    <TableHead className="text-right text-white/60 font-bold uppercase tracking-wider text-[9px]">Email Welcome</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-white/5">
+                  {generatedCredentials.map((cred, idx) => (
+                    <TableRow key={idx} className="border-white/5 hover:bg-white/3 font-mono text-[11px]">
+                      <TableCell className="font-sans font-semibold text-white">{cred.displayName}</TableCell>
+                      <TableCell className="text-muted-foreground">{cred.email}</TableCell>
+                      <TableCell className="text-primary font-bold">{cred.password}</TableCell>
+                      <TableCell className="text-[10px] uppercase font-bold text-indigo-400">{cred.role}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 text-indigo-400 hover:text-white hover:bg-indigo-500/20 rounded-md"
+                          onClick={() => triggerMailTo(cred.displayName, cred.email, cred.password, cred.role)}
+                          title="Send pre-filled welcome email"
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2">
+              <Button 
+                variant="outline" 
+                onClick={copyAllCredentials} 
+                className="rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-xs flex items-center gap-1.5"
+              >
+                Copy All to Clipboard
+              </Button>
+              <Button 
+                onClick={downloadCredentialsCsv} 
+                className="rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg hover:opacity-90 transition-all"
+              >
+                Download CSV Index
+              </Button>
+              <Button 
+                onClick={() => setShowCredentialsDialog(false)} 
+                className="rounded-xl bg-primary text-white text-xs font-bold px-5"
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
