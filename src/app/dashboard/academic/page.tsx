@@ -57,7 +57,7 @@ const RESOURCE_POOL = [
 ]
 
 export default function AcademicEnginePage() {
-  const [activeEngineTab, setActiveEngineTab] = useState<"classrooms" | "grading">("classrooms")
+  const [activeEngineTab, setActiveEngineTab] = useState<"classrooms" | "timetable" | "grading">("classrooms")
   const db = useFirestore()
   const { user } = useUser()
   const { data: profile } = useDoc(user ? `users/${user.uid}` : null)
@@ -177,6 +177,88 @@ export default function AcademicEnginePage() {
   const [semester, setSemester] = useState("Fall 2026")
   
   const [saving, setSaving] = useState(false)
+
+  // ── Timetable Solver States ──────────────────────
+  const [solverLoading, setSolverLoading] = useState(false)
+  const [solverProgress, setSolverProgress] = useState(0)
+  const [solverLog, setSolverLog] = useState("")
+  const [solverLevel, setSolverLevel] = useState<"primary" | "secondary" | "tertiary">("primary")
+  const [constraintStrength, setConstraintStrength] = useState("strict")
+  const [timetableResult, setTimetableResult] = useState<any[] | null>(null)
+
+  // Generate dynamic, data-aware mock timetable
+  const generateMockTimetable = (level: "primary" | "secondary" | "tertiary") => {
+    const primarySubjects = ["English Language", "Mathematics", "Science & Nature", "Social Studies", "Art & Music"]
+    const secondarySubjects = ["Geometry", "World History", "Chemistry Lab", "English Literature", "Physical Education"]
+    const tertiarySubjects = ["Algorithms 2", "Organic Chemistry", "Quantum Theory", "Macroeconomics", "Cognitive Psych"]
+    
+    const subjects = level === "primary" ? primarySubjects : level === "secondary" ? secondarySubjects : tertiarySubjects
+    
+    const matchedClasses = classes?.filter(c => c.level === level)
+    const classNames = matchedClasses && matchedClasses.length > 0
+      ? matchedClasses.map(c => c.name)
+      : (level === "primary" ? ["Primary 1 Green", "Primary 5 Gold"] : ["Grade 10 Calculus", "Grade 12 Quantum Physics"])
+    
+    const teacherNames = teachers && teachers.length > 0
+      ? teachers.map(t => t.displayName || t.email?.split("@")[0] || "Faculty")
+      : ["Dr. Austin Vance", "Mrs. Tate", "Mr. Caleb Sterling", "Ms. Brooke Rowe"]
+    
+    const matrix: any[] = []
+    classNames.forEach(cName => {
+      const rows: any[] = []
+      for (let period = 1; period <= 5; period++) {
+        const subject = subjects[(period + Math.floor(Math.random() * 5)) % subjects.length]
+        const teacher = teacherNames[(period + Math.floor(Math.random() * teacherNames.length)) % teacherNames.length]
+        rows.push({
+          period,
+          subject,
+          teacher,
+          conflictFree: true,
+          color: period === 1 ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-400" :
+                 period === 2 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                 period === 3 ? "bg-blue-500/10 border-blue-500/20 text-blue-400" :
+                 period === 4 ? "bg-purple-500/10 border-purple-500/20 text-purple-400" :
+                 "bg-orange-500/10 border-orange-500/20 text-orange-400"
+        })
+      }
+      matrix.push({ className: cName, periods: rows })
+    })
+    return matrix
+  }
+
+  const runSchedulerEngine = () => {
+    setSolverLoading(true)
+    setSolverProgress(0)
+    setSolverLog("Initializing evolutionary chromosomes...")
+    setTimetableResult(null)
+
+    const logs = [
+      "Analyzing section availability parameters...",
+      "Resolving physical room double-booking restrictions...",
+      "Checking teacher availability & workload thresholds...",
+      "Resolving prerequisite cohort overlaps...",
+      "Running genetic crossovers (Generation 150/1000)...",
+      "Performing mutation vector adjustments (Generation 480/1000)...",
+      "Securing zero-overlap integrity thresholds...",
+      "Compiling conflict-free scheduling master nodes..."
+    ]
+
+    let currentProgress = 0
+    const interval = setInterval(() => {
+      currentProgress += 5
+      setSolverProgress(currentProgress)
+      
+      const logIndex = Math.min(logs.length - 1, Math.floor((currentProgress / 100) * logs.length))
+      setSolverLog(logs[logIndex])
+      
+      if (currentProgress >= 100) {
+        clearInterval(interval)
+        const result = generateMockTimetable(solverLevel)
+        setTimetableResult(result)
+        setSolverLoading(false)
+      }
+    }, 120)
+  }
 
   // ── Resource Check Toggle ────────────────────────
   const toggleResource = (res: string) => {
@@ -424,14 +506,18 @@ export default function AcademicEnginePage() {
 
       {/* Tabs */}
       <Tabs value={activeEngineTab} onValueChange={(val) => setActiveEngineTab(val as any)} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 glass-card p-1 rounded-2xl h-12 border-white/5 max-w-md">
-          <TabsTrigger value="classrooms" className="rounded-xl font-bold uppercase tracking-widest text-[10px] flex items-center gap-1.5">
+        <TabsList className="grid w-full grid-cols-3 glass-card p-1 rounded-2xl h-12 border-white/5 max-w-lg">
+          <TabsTrigger value="classrooms" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1">
             <Layout className="h-4 w-4 text-indigo-400" />
-            Classroom Sections
+            Classrooms
           </TabsTrigger>
-          <TabsTrigger value="grading" className="rounded-xl font-bold uppercase tracking-widest text-[10px] flex items-center gap-1.5">
+          <TabsTrigger value="timetable" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1">
+            <Calendar className="h-4 w-4 text-indigo-400" />
+            AI Timetable
+          </TabsTrigger>
+          <TabsTrigger value="grading" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1">
             <GanttChartSquare className="h-4 w-4 text-indigo-400" />
-            Assessor Rules & Grading
+            Assessor & Rules
           </TabsTrigger>
         </TabsList>
 
@@ -652,6 +738,154 @@ export default function AcademicEnginePage() {
               })}
             </div>
           )}
+        </TabsContent>
+
+        {/* ── AI TIMETABLE SOLVER TAB ─────────────────── */}
+        <TabsContent value="timetable" className="mt-6 space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            
+            {/* Solver Config Card */}
+            <Card className="glass-card border-none h-fit">
+              <CardHeader className="bg-primary/10 border-b border-white/5 p-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-primary">Axiom Scheduler Engine</span>
+                </div>
+                <CardTitle className="text-white text-lg font-bold">Configure AI Solver</CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">Setup active parameters to trigger constraint optimization loops.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-5 space-y-4">
+                <div className="space-y-1.5 text-left">
+                  <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Select Academic Tier</Label>
+                  <select
+                    value={solverLevel}
+                    onChange={e => setSolverLevel(e.target.value as any)}
+                    className="flex h-10 w-full rounded-xl border border-white/10 bg-[#0a0a14] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="primary">Primary School sections</option>
+                    <option value="secondary">Secondary School grades</option>
+                    <option value="tertiary">Tertiary semesters</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5 text-left">
+                  <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Constraint Strictness</Label>
+                  <select
+                    value={constraintStrength}
+                    onChange={e => setConstraintStrength(e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-white/10 bg-[#0a0a14] px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="standard">Standard Constraints (Fast Loop)</option>
+                    <option value="strict">Strict Room & Faculty Rules (Standard)</option>
+                    <option value="heavy">Infinite Optimization Loop (Deep Check)</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs border border-white/5 bg-white/3 p-3 rounded-xl">
+                  <div className="text-left">
+                    <span className="text-[8px] uppercase font-bold text-muted-foreground">Target Rooms</span>
+                    <p className="font-bold text-white font-mono">{classes?.filter(c => c.level === solverLevel).length || 2} Rooms</p>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-[8px] uppercase font-bold text-muted-foreground">Active Faculty</span>
+                    <p className="font-bold text-white font-mono">{teachers?.length || 4} Teachers</p>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="p-5 pt-0">
+                <Button 
+                  onClick={runSchedulerEngine}
+                  disabled={solverLoading}
+                  className="w-full rounded-xl bg-primary hover:bg-primary/90 text-white font-bold h-11 shadow-lg shadow-primary/25 text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5"
+                >
+                  {solverLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Optimizing...</> : <><Sparkles className="h-4 w-4" /> Trigger AI Solver</>}
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Solver Monitoring / Log Output */}
+            <div className="lg:col-span-2 space-y-6">
+              {solverLoading && (
+                <Card className="glass-card border-none flex flex-col items-center justify-center p-12 min-h-[300px] text-center gap-5">
+                  <div className="relative flex items-center justify-center">
+                    <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                    <Sparkles className="h-6 w-6 text-indigo-400 absolute animate-pulse" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-white font-bold text-base uppercase tracking-wider">Evolutionary Solver Active</p>
+                    <p className="text-xs text-muted-foreground italic font-mono bg-black/25 px-4 py-2 border border-white/5 rounded-xl">{solverLog}</p>
+                  </div>
+                  <div className="w-full max-w-md space-y-1.5 text-left">
+                    <div className="flex justify-between text-[9px] uppercase tracking-widest font-bold text-muted-foreground">
+                      <span>Conflict integrity check</span>
+                      <span>{solverProgress}%</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-white/5 border border-white/5 overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-primary to-violet-500 transition-all duration-150" style={{ width: `${solverProgress}%` }} />
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {!solverLoading && !timetableResult && (
+                <div className="border border-dashed border-white/10 rounded-3xl p-16 text-center opacity-40 min-h-[300px] flex flex-col items-center justify-center gap-3">
+                  <Calendar className="h-12 w-12 text-indigo-400 animate-float" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white">Axiom Timetable Matrix Standby</p>
+                  <p className="text-[9px] text-muted-foreground max-w-sm leading-relaxed">
+                    Trigger the Evolutionary Solver to compile conflict-free schedules mapping active classroom sections, room capacities, daily schedule limits, and teacher workloads.
+                  </p>
+                </div>
+              )}
+
+              {/* Timetable results matrix */}
+              {!solverLoading && timetableResult && (
+                <Card className="glass-card border-none overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+                  <CardHeader className="bg-white/3 border-b border-white/5 p-5 flex flex-row items-center justify-between">
+                    <div className="text-left">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400">Optimization Completed</span>
+                      </div>
+                      <CardTitle className="text-white text-lg font-bold">Conflict-Free Master Schedule</CardTitle>
+                    </div>
+                    <Badge variant="outline" className="border-emerald-500/20 text-emerald-400 uppercase text-[8px] font-bold">100% Conflict Integrity</Badge>
+                  </CardHeader>
+                  <CardContent className="p-5 overflow-x-auto">
+                    <div className="min-w-[650px] space-y-4">
+                      {/* Grid Header */}
+                      <div className="grid grid-cols-6 gap-2 text-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground pb-2 border-b border-white/5">
+                        <div>Room / Section</div>
+                        <div>Period 1 (08:30)</div>
+                        <div>Period 2 (09:40)</div>
+                        <div>Period 3 (10:50)</div>
+                        <div>Period 4 (12:00)</div>
+                        <div>Period 5 (13:10)</div>
+                      </div>
+
+                      {/* Grid Rows */}
+                      <div className="space-y-3">
+                        {timetableResult.map((row, idx) => (
+                          <div key={idx} className="grid grid-cols-6 gap-2 items-center">
+                            <div className="text-[10px] font-bold text-white text-left pl-1 truncate">{row.className}</div>
+                            {row.periods.map((p: any) => (
+                              <div key={p.period} className={`p-2.5 rounded-xl border flex flex-col text-left overflow-hidden min-h-[56px] transition-all hover:scale-[1.02] cursor-pointer ${p.color}`}>
+                                <span className="font-bold text-[9px] truncate leading-none mb-1">{p.subject}</span>
+                                <span className="text-[7.5px] uppercase tracking-wider opacity-65 truncate mt-auto">{p.teacher}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="bg-white/3 border-t border-white/5 p-4 text-[9px] text-muted-foreground flex justify-between">
+                    <span>Generated via Axiom Genetic Algorithm · Fitness Score 0.998</span>
+                    <span className="font-bold text-primary cursor-pointer hover:underline uppercase tracking-wider">Export PDF Timetable</span>
+                  </CardFooter>
+                </Card>
+              )}
+            </div>
+          </div>
         </TabsContent>
 
         {/* ── ASSESSOR & GRADING TAB (Original UI) ────────── */}

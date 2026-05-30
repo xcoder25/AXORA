@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { signOut, User as FirebaseUser } from 'firebase/auth';
 import { useUser, useDoc, useAuth } from '@/firebase';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
@@ -36,6 +36,48 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const [navProgress, setNavProgress] = useState(0);
+  const [navLoading, setNavLoading] = useState(false);
+
+  useEffect(() => {
+    if (navLoading) {
+      setNavProgress(100);
+      const timer = setTimeout(() => {
+        setNavLoading(false);
+        setNavProgress(0);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest('a');
+      if (anchor && anchor.href && anchor.target !== '_blank') {
+        const url = new URL(anchor.href);
+        if (url.origin === window.location.origin && url.pathname !== window.location.pathname) {
+          setNavLoading(true);
+          setNavProgress(15);
+          
+          const timer = setInterval(() => {
+            setNavProgress(prev => {
+              if (prev >= 90) {
+                clearInterval(timer);
+                return 90;
+              }
+              return prev + (100 - prev) * 0.12;
+            });
+          }, 180);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleLinkClick);
+    return () => document.removeEventListener('click', handleLinkClick);
+  }, [pathname]);
+
   const { data: profile, loading: profileLoading } = useDoc(user ? `users/${user.uid}` : null);
   const { data: school, loading: schoolLoading } = useDoc(profile?.schoolId ? `schools/${profile.schoolId}` : null);
 
@@ -62,6 +104,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider className="dashboard-shell min-h-screen">
+      {navLoading && (
+        <div 
+          className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-primary via-violet-500 to-pink-500 z-[9999] transition-all duration-300 ease-out shadow-[0_0_15px_rgba(139,92,246,0.8)]"
+          style={{ width: `${navProgress}%` }}
+        />
+      )}
       <div className="dashboard-mesh pointer-events-none fixed inset-0 -z-10" aria-hidden />
       <DashboardSidebar
         userRole={userRole}

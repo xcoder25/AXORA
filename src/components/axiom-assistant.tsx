@@ -43,6 +43,7 @@ type Message = {
   content: string;
   action?: string;
   navigateTo?: string;
+  citations?: string[];
 };
 
 // ── Web Speech API typing ────────────────────────────────────────────────────
@@ -126,6 +127,7 @@ export function AxiomAssistant() {
         content: result.response,
         action: result.action,
         navigateTo: result.navigateTo,
+        citations: result.citations,
       };
       setMessages(prev => [...prev, assistantMsg]);
     } catch (e) {
@@ -271,6 +273,18 @@ export function AxiomAssistant() {
                           : 'bg-white/5 border border-white/10 text-white/90 rounded-bl-sm'
                       )}>
                         <p className="whitespace-pre-wrap text-[12px]">{msg.content}</p>
+                        {msg.citations && msg.citations.length > 0 && (
+                          <div className="mt-2.5 space-y-1 text-left">
+                            <span className="text-[7.5px] uppercase font-bold text-indigo-400 tracking-wider block">Retrieved Documents:</span>
+                            <div className="flex flex-wrap gap-1">
+                              {msg.citations.map((cite, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-[8px] bg-indigo-500/10 text-indigo-300 border-none font-bold">
+                                  📄 {cite}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {msg.navigateTo && (
                           <button
                             onClick={() => handleNavigate(msg.navigateTo!)}
