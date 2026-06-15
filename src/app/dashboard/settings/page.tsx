@@ -1,315 +1,256 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useFirestore, useDoc, useUser } from "@/firebase"
-import { doc, updateDoc } from "firebase/firestore"
-import { cn } from "@/lib/utils"
-import { 
-  Settings, CreditCard, Shield, Sparkles, Check, 
-  Building, RefreshCw, Key, ShieldAlert, Cpu, Palette
-} from "lucide-react"
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Settings, Building2, ShieldCheck, Database, Bell, Palette, Cpu, Users,
+  CreditCard, Sparkles, CheckCircle2, AlertTriangle, Key, HardDrive
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export default function SettingsPage() {
-  const db = useFirestore()
-  const { user } = useUser()
-  const { data: profile } = useDoc(user ? `users/${user.uid}` : null)
-  const { data: school, loading: schoolLoading } = useDoc(profile?.schoolId ? `schools/${profile.schoolId}` : null)
+export default function GlobalSettingsPage() {
+  const [activeTab, setActiveTab] = useState('institution');
+  const [loading, setLoading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState("payment")
-  const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [selectedTheme, setSelectedTheme] = useState("dark")
-
-  // Settings State Form
-  const [paystackPub, setPaystackPub] = useState("")
-  const [paystackSec, setPaystackSec] = useState("")
-  const [currency, setCurrency] = useState("NGN")
-  const [webhookUrl, setWebhookUrl] = useState("")
-
-  const [institutionName, setInstitutionName] = useState("")
-  const [contactEmail, setContactEmail] = useState("")
-
-  // Fetch configs
-  useEffect(() => {
-    if (school) {
-      setInstitutionName(school.name || "")
-      setContactEmail(school.contactEmail || "")
-      setPaystackPub(school.paystackPub || "")
-      setPaystackSec(school.paystackSec || "")
-      setCurrency(school.currency || "NGN")
-    }
-  }, [school])
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setWebhookUrl(`${window.location.origin}/api/paystack/webhook`)
-      const savedTheme = localStorage.getItem("axora-theme") || "dark"
-      setSelectedTheme(savedTheme)
-    }
-  }, [])
-
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!profile?.schoolId || !db) return
-    setSaving(true)
-    setSuccess(false)
-    
-    try {
-      await updateDoc(doc(db, "schools", profile.schoolId), {
-        paystackPub,
-        paystackSec,
-        currency
-      })
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
-    } catch (err) {
-      console.error("Error saving settings:", err)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!profile?.schoolId || !db) return
-    setSaving(true)
-    setSuccess(false)
-    
-    try {
-      await updateDoc(doc(db, "schools", profile.schoolId), {
-        name: institutionName,
-        contactEmail: contactEmail
-      })
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
-    } catch (err) {
-      console.error("Error saving profile:", err)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleThemeChange = (newTheme: string) => {
-    setSelectedTheme(newTheme)
-    if (typeof window !== "undefined") {
-      localStorage.setItem("axora-theme", newTheme)
-      document.body.classList.remove("theme-light", "theme-cyberpunk", "theme-solarized")
-      if (newTheme !== "dark") {
-        document.body.classList.add(`theme-${newTheme}`)
-      }
-    }
-  }
+  const handleSave = async () => {
+    setLoading(true);
+    await new Promise(r => setTimeout(r, 1500));
+    setLoading(false);
+  };
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-5xl mx-auto w-full">
+    <div className="space-y-8 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 w-full">
+
+      {/* ── Header ───────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 uppercase tracking-widest text-[9px] font-bold">
-              System Control Console
-            </Badge>
-            <Shield className="h-3 w-3 text-primary animate-pulse" />
-          </div>
-          <h2 className="font-headline text-4xl font-bold text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.45)]">Settings</h2>
-          <p className="text-muted-foreground text-lg">System node operations, security keys, and gateway credentials.</p>
+        <div className="space-y-2">
+          <Badge className="bg-primary/10 text-primary border-primary/20 font-black uppercase tracking-widest text-[9px]">
+            <Settings className="mr-1 h-3 w-3" /> System Configuration
+          </Badge>
+          <h2 className="font-headline text-4xl font-black text-white tracking-tight drop-shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+            Global Settings
+          </h2>
+          <p className="text-muted-foreground max-w-xl">
+            Configure institutional parameters, billing layers, API integrations, and security protocols.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" className="rounded-xl h-11 px-6 font-black uppercase tracking-widest text-[10px] bg-white/5 border-white/10">
+            Discard Changes
+          </Button>
+          <Button onClick={handleSave} disabled={loading} className="rounded-xl h-11 px-8 font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20">
+            {loading ? 'Saving...' : 'Save Configuration'}
+          </Button>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 glass-card p-1 rounded-2xl h-12 border-white/5">
-          <TabsTrigger value="payment" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5" /> Payment Gateway</TabsTrigger>
-          <TabsTrigger value="institution" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> Institution Info</TabsTrigger>
-          <TabsTrigger value="security" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Nodes & Security</TabsTrigger>
-          <TabsTrigger value="theme" className="rounded-xl font-bold uppercase tracking-widest text-[9px] flex items-center gap-1.5"><Palette className="h-3.5 w-3.5" /> Theme Mode</TabsTrigger>
-        </TabsList>
+      <div className="grid gap-8 lg:grid-cols-12">
 
-        {/* Tab 1: Payment Gateway Settings */}
-        <TabsContent value="payment" className="mt-8 space-y-6 animate-in fade-in duration-300">
-          <form onSubmit={handleSaveSettings}>
-            <Card className="glass-card border-none">
-              <CardHeader className="bg-primary/10 border-b border-white/5 p-6">
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-primary font-mono">Fintech Core Configuration</span>
-                </div>
-                <CardTitle className="text-xl text-white">Paystack API Gateway Integration</CardTitle>
-                <CardDescription className="text-xs">Setup local transaction networks, active currency codes and verify credentials.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Paystack Public Key</Label>
-                    <div className="relative">
-                      <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-                      <Input
-                        value={paystackPub}
-                        onChange={e => setPaystackPub(e.target.value)}
-                        className="bg-white/5 border-white/10 h-11 pl-10 rounded-xl text-xs font-mono"
-                        required
-                      />
+        {/* ── Sidebar Navigation ─────────────────────────── */}
+        <div className="lg:col-span-3 space-y-2">
+          {[
+            { id: 'institution', label: 'Institutional Profile', icon: Building2 },
+            { id: 'ai', label: 'AXIOM AI Engine', icon: Cpu },
+            { id: 'security', label: 'Security & Access', icon: ShieldCheck },
+            { id: 'billing', label: 'Billing & Gateway', icon: CreditCard },
+            { id: 'appearance', label: 'Theme & Branding', icon: Palette },
+            { id: 'database', label: 'Data Management', icon: Database },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={cn('w-full flex items-center gap-3 p-3 rounded-xl transition-all font-bold text-sm',
+                activeTab === tab.id
+                  ? 'bg-primary/20 text-primary border border-primary/30 shadow-[0_0_15px_rgba(99,102,241,0.15)]'
+                  : 'text-white/60 hover:bg-white/5 hover:text-white border border-transparent'
+              )}>
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+              {tab.id === 'ai' && <Badge className="ml-auto bg-violet-500/20 text-violet-400 border-none text-[7px] font-black uppercase">Pro</Badge>}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Main Content Area ──────────────────────────── */}
+        <div className="lg:col-span-9">
+          
+          {/* Institutional Profile */}
+          {activeTab === 'institution' && (
+            <div className="space-y-6 animate-in slide-in-from-right-8 duration-500">
+              <Card className="glass-card border-white/5">
+                <CardHeader className="border-b border-white/5 p-6 bg-white/[0.02]">
+                  <CardTitle className="text-xl text-white">Institutional Identity</CardTitle>
+                  <CardDescription className="text-xs">Primary campus details displayed on reports, parent portals, and ID cards.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  <div className="flex items-start gap-6">
+                    <div className="h-24 w-24 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative group cursor-pointer overflow-hidden">
+                      <span className="text-4xl">🎓</span>
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-white">Upload</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <Label className="text-[9px] font-black uppercase tracking-widest text-white/40">Institution Name</Label>
+                      <Input defaultValue="AXORA Global Academy" className="bg-white/5 border-white/10 rounded-xl h-11 text-base font-bold text-white" />
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Paystack Secret Key</Label>
-                    <div className="relative">
-                      <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-                      <Input
-                        type="password"
-                        value={paystackSec}
-                        onChange={e => setPaystackSec(e.target.value)}
-                        className="bg-white/5 border-white/10 h-11 pl-10 rounded-xl text-xs font-mono"
-                        required
-                      />
+                  
+                  <div className="grid sm:grid-cols-2 gap-6">
+                    <div className="space-y-1.5">
+                      <Label className="text-[9px] font-black uppercase tracking-widest text-white/40">Registration ID / Code</Label>
+                      <Input defaultValue="AX-9921-EDU" className="bg-white/5 border-white/10 rounded-xl h-11" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[9px] font-black uppercase tracking-widest text-white/40">Primary Contact Email</Label>
+                      <Input defaultValue="admin@axora.edu" className="bg-white/5 border-white/10 rounded-xl h-11" />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <Label className="text-[9px] font-black uppercase tracking-widest text-white/40">Campus Address</Label>
+                      <Input defaultValue="144 Cybernetics Way, Neo-Victoria District" className="bg-white/5 border-white/10 rounded-xl h-11" />
                     </div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                <div className="grid gap-4 sm:grid-cols-2 pt-2">
+              <Card className="glass-card border-white/5">
+                <CardHeader className="border-b border-white/5 p-6 bg-white/[0.02]">
+                  <CardTitle className="text-xl text-white">Academic Calendar</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 grid sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
-                    <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Primary Settlement Currency</Label>
-                    <select
-                      value={currency}
-                      onChange={e => setCurrency(e.target.value)}
-                      className="flex h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    >
-                      <option value="NGN" className="bg-slate-900">NGN (Nigerian Naira ₦)</option>
-                      <option value="GHS" className="bg-slate-900">GHS (Ghanaian Cedi ₵)</option>
-                      <option value="ZAR" className="bg-slate-900">ZAR (South African Rand R)</option>
-                      <option value="USD" className="bg-slate-900">USD (United States Dollar $)</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Calculated API Endpoint Status</Label>
-                    <div className="h-11 border border-white/5 bg-white/3 rounded-xl flex items-center justify-between px-4">
-                      <span className="text-[10px] text-muted-foreground font-mono">https://api.paystack.co/</span>
-                      <Badge className="bg-emerald-500/10 text-emerald-400 border-none text-[8px] tracking-wider uppercase font-black">Connected</Badge>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pt-3 border-t border-white/5">
-                  <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Paystack Webhook Endpoint (For automated ledger updates)</Label>
-                  <Input
-                    value={webhookUrl}
-                    readOnly
-                    className="bg-white/3 border-white/10 h-11 rounded-xl text-xs font-mono text-muted-foreground"
-                  />
-                  <p className="text-[9px] text-muted-foreground mt-1">Copy this webhook URL directly into your Paystack Dashboard settings area under Webhook URL field.</p>
-                </div>
-              </CardContent>
-              <CardFooter className="p-6 border-t border-white/5 flex justify-between items-center bg-white/3">
-                <span className="text-[9px] font-mono text-muted-foreground/60">NODE ID: GW_PAYSTACK_ACTIVE</span>
-                <Button type="submit" className="rounded-xl h-11 px-6 font-bold uppercase text-[9px] tracking-widest shadow-lg" disabled={saving}>
-                  {saving ? <><RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" /> Committing...</> : 
-                   success ? <><Check className="mr-2 h-3.5 w-3.5" /> Committed Successfully</> : 
-                   "Save Gateway Settings"}
-                </Button>
-              </CardFooter>
-            </Card>
-          </form>
-        </TabsContent>
-
-        {/* Tab 2: Institution Settings */}
-        <TabsContent value="institution" className="mt-8 space-y-6 animate-in fade-in duration-300">
-          <form onSubmit={handleSaveProfile}>
-            <Card className="glass-card border-none">
-              <CardHeader className="bg-primary/10 border-b border-white/5 p-6">
-                <CardTitle className="text-xl text-white">Institution Profile Node</CardTitle>
-                <CardDescription className="text-xs">Operational identifiers and metadata parameters.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Institutional Name</Label>
-                    <Input value={institutionName} onChange={e => setInstitutionName(e.target.value)} className="bg-white/5 border-white/10 h-11 rounded-xl" />
+                    <Label className="text-[9px] font-black uppercase tracking-widest text-white/40">Current Academic Term</Label>
+                    <Select defaultValue="term-2">
+                      <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="term-1">First Term (Sep - Dec)</SelectItem>
+                        <SelectItem value="term-2">Second Term (Jan - Apr)</SelectItem>
+                        <SelectItem value="term-3">Third Term (May - Jul)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Primary Support / Billing Email</Label>
-                    <Input value={contactEmail} onChange={e => setContactEmail(e.target.value)} className="bg-white/5 border-white/10 h-11 rounded-xl" />
+                    <Label className="text-[9px] font-black uppercase tracking-widest text-white/40">Current Session Year</Label>
+                    <Select defaultValue="2025">
+                      <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2024">2024 / 2025</SelectItem>
+                        <SelectItem value="2025">2025 / 2026</SelectItem>
+                        <SelectItem value="2026">2026 / 2027</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
-              </CardContent>
-              <CardFooter className="p-6 border-t border-white/5 flex justify-between items-center bg-white/3">
-                <span className="text-[9px] font-mono text-muted-foreground/60">Registry reference sync</span>
-                <Button type="submit" className="rounded-xl h-10 px-6 font-bold uppercase text-[9px] tracking-widest" disabled={saving}>
-                  {saving ? <><RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" /> Saving...</> : 
-                   success ? <><Check className="mr-2 h-3.5 w-3.5" /> Saved</> : 
-                   "Save Profile"}
-                </Button>
-              </CardFooter>
-            </Card>
-          </form>
-        </TabsContent>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-        {/* Tab 3: Operational Node Status */}
-        <TabsContent value="security" className="mt-8 space-y-6 animate-in fade-in duration-300">
-          <Card className="glass-card border-none">
-            <CardHeader className="bg-primary/10 border-b border-white/5 p-6">
-              <CardTitle className="text-xl text-white">Security & Operational Node Status</CardTitle>
-              <CardDescription className="text-xs">Real-time surveillance microservice parameters and API server connections.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="grid gap-4 sm:grid-cols-3">
-                {[
-                  { label: "Surveillance Pipeline", value: "Operational", desc: "FastAPI + YOLOv8 Active", color: "text-emerald-400 bg-emerald-500/10" },
-                  { label: "Go2RTC Core Stream Proxy", value: "Connected", desc: "Ports 1984 & 8554 Binded", color: "text-emerald-400 bg-emerald-500/10" },
-                  { label: "Primary Database Connection", value: "Stable Pool", desc: "Firestore Sync Active", color: "text-emerald-400 bg-emerald-500/10" }
-                ].map((node, i) => (
-                  <div key={i} className="p-4 rounded-2xl bg-white/3 border border-white/5 text-center">
-                    <Cpu className="h-6 w-6 text-primary mx-auto mb-2 animate-pulse" />
-                    <p className="text-[10px] font-bold text-white uppercase">{node.label}</p>
-                    <Badge className={cn("text-[8px] font-black uppercase mt-2 border-none", node.color)}>{node.value}</Badge>
-                    <p className="text-[9px] text-muted-foreground mt-1.5">{node.desc}</p>
+          {/* AXIOM AI Engine */}
+          {activeTab === 'ai' && (
+            <div className="space-y-6 animate-in slide-in-from-right-8 duration-500">
+              <Card className="glass-card border-violet-500/20 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-600/10 to-transparent pointer-events-none" />
+                <CardHeader className="border-b border-white/5 p-6 bg-white/[0.02] relative z-10">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Cpu className="h-4 w-4 text-violet-400 animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-violet-400">Neural Configuration</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab 4: Workspace Theme Selection */}
-        <TabsContent value="theme" className="mt-8 space-y-6 animate-in fade-in duration-300">
-          <Card className="glass-card border-none">
-            <CardHeader className="bg-primary/10 border-b border-white/5 p-6">
-              <CardTitle className="text-xl text-white">Workspace Theme Mode</CardTitle>
-              <CardDescription className="text-xs">Select your preference for visual style, coloring, and layout density.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid gap-4 sm:grid-cols-4">
-                {[
-                  { id: "dark", name: "Deep Space (Dark)", desc: "Default neon dark dashboard", bg: "bg-[#010206] border-indigo-500/30" },
-                  { id: "light", name: "Clean Light", desc: "Crisp light indigo workspace", bg: "bg-slate-100 border-slate-300" },
-                  { id: "cyberpunk", name: "Cyberpunk", desc: "High-contrast electric pink & cyan", bg: "bg-purple-950/40 border-pink-500/30" },
-                  { id: "solarized", name: "Solarized Warm", desc: "Warm contrast developer mode", bg: "bg-[#002b36] border-yellow-500/30" }
-                ].map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => handleThemeChange(t.id)}
-                    className={cn(
-                      "p-4 rounded-2xl border text-left transition-all hover:scale-[1.01] hover:bg-white/5 flex flex-col justify-between min-h-[140px]",
-                      selectedTheme === t.id ? "ring-2 ring-primary border-primary bg-primary/5" : "border-white/5 bg-white/3"
-                    )}
-                  >
+                  <CardTitle className="text-xl text-white">AXIOM & NEXORA Intelligence</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6 relative z-10">
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-black/40 border border-violet-500/30">
                     <div>
-                      <p className="text-xs font-bold text-white">{t.name}</p>
-                      <p className="text-[9px] text-muted-foreground mt-1.5 leading-relaxed">{t.desc}</p>
+                      <p className="text-sm font-bold text-white">Enable Generative Grading</p>
+                      <p className="text-[10px] text-white/50 max-w-sm mt-1">Allows the AI to semantically grade essays and provide automated feedback to students.</p>
                     </div>
-                    <div className={cn("h-4 w-4 rounded-full border mt-3 self-end flex items-center justify-center", t.bg)}>
-                      {selectedTheme === t.id && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                    <Switch defaultChecked className="data-[state=checked]:bg-violet-500" />
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all">
+                    <div>
+                      <p className="text-sm font-bold text-white">Predictive Dropout Analysis</p>
+                      <p className="text-[10px] text-white/50 max-w-sm mt-1">Analyzes attendance and grade trends to flag at-risk students automatically.</p>
                     </div>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                    <Switch defaultChecked className="data-[state=checked]:bg-violet-500" />
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all">
+                    <div>
+                      <p className="text-sm font-bold text-white">NEXORA Daily Voice Briefings</p>
+                      <p className="text-[10px] text-white/50 max-w-sm mt-1">Synthesizes TTS morning intelligence reports for administrators.</p>
+                    </div>
+                    <Switch defaultChecked className="data-[state=checked]:bg-violet-500" />
+                  </div>
+                  
+                  <div className="pt-6 border-t border-white/5 space-y-4">
+                    <Label className="text-[9px] font-black uppercase tracking-widest text-violet-400">LLM Provider</Label>
+                    <Select defaultValue="gemini">
+                      <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gemini">Google Gemini 1.5 Pro (Recommended)</SelectItem>
+                        <SelectItem value="gpt4">OpenAI GPT-4o</SelectItem>
+                        <SelectItem value="claude">Anthropic Claude 3.5 Sonnet</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Security & Access */}
+          {activeTab === 'security' && (
+            <div className="space-y-6 animate-in slide-in-from-right-8 duration-500">
+              <Card className="glass-card border-white/5">
+                <CardHeader className="border-b border-white/5 p-6 bg-white/[0.02]">
+                  <CardTitle className="text-xl text-white">Authentication & Access</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div>
+                      <p className="text-sm font-bold text-white">Require Two-Factor Auth (2FA)</p>
+                      <p className="text-[10px] text-white/50 mt-1">Mandatory for all Administrator and Teacher accounts.</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div>
+                      <p className="text-sm font-bold text-white">IP Geofencing</p>
+                      <p className="text-[10px] text-white/50 mt-1">Restrict admin dashboard access to campus IP ranges only.</p>
+                    </div>
+                    <Switch />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-white/5">
+                <CardHeader className="border-b border-white/5 p-6 bg-white/[0.02]">
+                  <CardTitle className="text-xl text-white">API Keys & Tokens</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-[9px] font-black uppercase tracking-widest text-white/40">Firebase Web API Key</Label>
+                    <div className="flex gap-2">
+                      <Input type="password" defaultValue="AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxx" className="bg-white/5 border-white/10 rounded-xl h-11 font-mono text-xs" />
+                      <Button variant="outline" className="h-11 rounded-xl bg-white/5 border-white/10 font-bold text-[10px] uppercase">Reveal</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+        </div>
+      </div>
     </div>
-  )
+  );
 }

@@ -19,6 +19,7 @@ import {
   Zap,
   GanttChartSquare,
   IdCard,
+  Brain,
 } from "lucide-react"
 
 import {
@@ -43,6 +44,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "NEXORA AI Hub", url: "/dashboard/nexora", icon: Brain, roles: ["admin"] },
   { title: "Finance Hub", url: "/dashboard/finance", icon: Wallet, roles: ["admin", "parent"] },
   { title: "Academic Engine", url: "/dashboard/academic", icon: GanttChartSquare, roles: ["admin", "teacher"] },
   { title: "Workflows", url: "/dashboard/workflows", icon: Zap, roles: ["admin"] },
@@ -138,6 +140,9 @@ export function DashboardSidebar({
                     <span className="font-semibold text-[10px] uppercase tracking-wider">
                       {item.title}
                     </span>
+                    {item.url === '/dashboard/nexora' && pathname !== item.url && (
+                      <span className="ml-auto rounded-md bg-violet-500/20 px-1.5 py-0.5 text-[7px] font-black uppercase text-violet-400">AI</span>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

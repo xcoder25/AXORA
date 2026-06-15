@@ -7,7 +7,7 @@ import { useUser, useDoc, useAuth } from '@/firebase';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/dashboard-sidebar';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, Building } from 'lucide-react';
+import { LogOut, Building, Command } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatRoleLabel, isAdminRole } from '@/lib/roles';
@@ -15,6 +15,8 @@ import { AppSplashScreen } from '@/components/app-splash-screen';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AxiomAssistant } from '@/components/axiom-assistant';
 import { ActionLoaderOverlay } from '@/components/action-loader-overlay';
+import { CommandPalette } from '@/components/command-palette';
+import { NotificationCenter } from '@/components/notification-center';
 
 function MissingProfileScreen({ user, onLogout }: { user: FirebaseUser; onLogout: () => void }) {
   return (
@@ -162,6 +164,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* Command Palette Trigger */}
+              <button
+                onClick={() => {
+                  const e = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true });
+                  window.dispatchEvent(e);
+                }}
+                className="hidden md:flex items-center gap-2 h-9 rounded-xl border border-white/10 bg-white/5 px-3 text-[10px] text-muted-foreground hover:border-white/20 hover:bg-white/10 hover:text-white transition-all duration-200"
+                title="Command Palette (Ctrl+K)"
+              >
+                <Command className="h-3 w-3" />
+                <span className="font-medium">Search...</span>
+                <kbd className="ml-1 rounded bg-white/10 px-1 py-0.5 text-[8px] font-bold">Ctrl K</kbd>
+              </button>
+              <NotificationCenter />
               <ThemeToggle compact />
               <div className="hidden text-right sm:block">
                 <p className="text-xs font-bold uppercase tracking-wider text-foreground">
@@ -188,6 +204,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-6 p-6 md:p-10">
+          <CommandPalette />
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-700 fill-mode-both">
             {children}
           </div>
