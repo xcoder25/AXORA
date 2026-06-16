@@ -5,7 +5,6 @@ import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth } from 'firebase/auth';
 import { FirebaseProvider } from './provider';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export const FirebaseClientProvider: React.FC<{
   firebaseApp: FirebaseApp;
@@ -15,7 +14,6 @@ export const FirebaseClientProvider: React.FC<{
 }> = ({ firebaseApp, firestore, auth, children }) => {
   return (
     <FirebaseProvider firebaseApp={firebaseApp} firestore={firestore} auth={auth}>
-      <FirebaseErrorListener />
       {children}
     </FirebaseProvider>
   );

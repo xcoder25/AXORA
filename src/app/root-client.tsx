@@ -5,14 +5,15 @@ import { initializeFirebase, FirebaseClientProvider } from '@/firebase';
 import { AppSplashScreen } from '@/components/app-splash-screen';
 import { AppGuideScreen } from '@/components/app-guide-screen';
 import { ThemeProvider } from '@/components/theme-provider';
-
-const { firebaseApp, firestore, auth } = initializeFirebase();
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 const SPLASH_MIN_MS = 2200;
 
 export default function RootClient({ children }: { children: React.ReactNode }) {
   const [booting, setBooting] = useState(true);
   const [showGuide, setShowGuide] = useState(false);
+  const [firebaseInstance] = useState(() => initializeFirebase());
+  const { firebaseApp, firestore, auth } = firebaseInstance;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -26,6 +27,7 @@ export default function RootClient({ children }: { children: React.ReactNode }) 
   return (
     <ThemeProvider>
       <FirebaseClientProvider firebaseApp={firebaseApp} firestore={firestore} auth={auth}>
+        <FirebaseErrorListener />
         {booting ? (
           <AppSplashScreen status="Starting Axora OS" />
         ) : showGuide ? (
