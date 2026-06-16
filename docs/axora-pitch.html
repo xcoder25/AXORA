@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AXORA — Institutional OS | Executive Overview</title>
+  <meta name="description" content="AXORA is Africa's most advanced Institutional Operating System. A complete AI-powered platform for schools — from attendance to finances to exams." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --midnight: #0a0e1a;
+      --navy: #0d1526;
+      --panel: #111827;
+      --panel2: #151e30;
+      --border: rgba(99,179,237,0.12);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16,185,129,0.18);
+      --emerald-soft: #34d399;
+      --blue: #3b82f6;
+      --indigo: #6366f1;
+      --sky: #38bdf8;
+      --gold: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --white: #ffffff;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--midnight);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ─── ANIMATED BACKGROUND ─── */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.18;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 600px; height: 600px; background: var(--indigo); top: -10%; left: -10%; animation-delay: 0s; }
+    .orb-2 { width: 500px; height: 500px; background: var(--emerald); top: 30%; right: -10%; animation-delay: -6s; }
+    .orb-3 { width: 400px; height: 400px; background: var(--blue); bottom: -10%; left: 30%; animation-delay: -12s; }
+
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(99,179,237,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,179,237,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* ─── LAYOUT ─── */
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    section { padding: 80px 0; }
+
+    /* ─── NAVBAR ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(10,14,26,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+    }
+    nav .inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      background: linear-gradient(135deg, #10b981, #38bdf8, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo span { font-weight: 300; opacity: 0.7; font-size: 0.8rem; letter-spacing: 0.2em; display: block; }
+    .nav-badge {
+      background: var(--emerald-glow);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: var(--emerald-soft);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 999px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 100px;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--emerald-glow);
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--emerald-soft);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .hero-eyebrow::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 10px var(--emerald); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2.8rem, 6vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+    }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, #10b981 0%, #38bdf8 40%, #6366f1 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-subtitle {
+      font-size: 1.2rem;
+      color: var(--muted);
+      max-width: 620px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      font-weight: 400;
+    }
+    .hero-cta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      color: white;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 14px 30px;
+      border-radius: 12px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 30px rgba(16,185,129,0.3);
+      transition: all 0.3s ease;
+      letter-spacing: 0.02em;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 45px rgba(16,185,129,0.5); }
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 14px 28px;
+      border-radius: 12px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.09); border-color: rgba(99,179,237,0.3); }
+
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 56px;
+      flex-wrap: wrap;
+    }
+    .stat { border-left: 2px solid var(--emerald); padding-left: 16px; }
+    .stat-num { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: white; }
+    .stat-label { font-size: 0.82rem; color: var(--muted); font-weight: 500; }
+
+    /* ─── SECTION HEADERS ─── */
+    .section-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--emerald-soft);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 16px;
+      color: white;
+    }
+    .section-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 580px;
+      line-height: 1.7;
+    }
+    .section-header { margin-bottom: 56px; }
+
+    /* ─── PROBLEM SECTION ─── */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .problem-card {
+      background: rgba(239,68,68,0.05);
+      border: 1px solid rgba(239,68,68,0.15);
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .problem-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #ef4444, transparent);
+    }
+    .problem-icon { font-size: 2rem; margin-bottom: 14px; }
+    .problem-card h3 { font-size: 1rem; font-weight: 700; color: #fca5a5; margin-bottom: 8px; }
+    .problem-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ─── MODULE CARDS ─── */
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .module-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      cursor: default;
+    }
+    .module-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(16,185,129,0.3);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px rgba(16,185,129,0.08);
+    }
+    .module-card .accent-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 20px 20px 0 0;
+    }
+    .card-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+    .module-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 10px;
+    }
+    .module-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.65; margin-bottom: 18px; }
+    .feature-list { list-style: none; }
+    .feature-list li {
+      font-size: 0.83rem;
+      color: var(--muted);
+      padding: 5px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .feature-list li::before { content: '✓'; color: var(--emerald); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    /* ─── ROI SECTION ─── */
+    .roi-section { background: var(--panel2); border-radius: 24px; padding: 60px; margin: 0 -10px; }
+    .roi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 32px;
+      margin-top: 48px;
+    }
+    .roi-card {
+      text-align: center;
+      padding: 32px 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: transform 0.3s;
+    }
+    .roi-card:hover { transform: translateY(-3px); }
+    .roi-num {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #10b981, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .roi-label { font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+
+    /* ─── TESTIMONIAL / QUOTE ─── */
+    .quote-block {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.08));
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 20px;
+      padding: 48px;
+      text-align: center;
+      position: relative;
+    }
+    .quote-mark {
+      font-size: 6rem;
+      line-height: 0.5;
+      color: rgba(99,102,241,0.2);
+      font-family: Georgia, serif;
+      margin-bottom: 20px;
+    }
+    .quote-text {
+      font-size: 1.35rem;
+      font-style: italic;
+      color: var(--text);
+      line-height: 1.7;
+      max-width: 700px;
+      margin: 0 auto 24px;
+      font-weight: 400;
+    }
+    .quote-author { font-size: 0.9rem; color: var(--emerald-soft); font-weight: 600; }
+
+    /* ─── HOW IT WORKS ─── */
+    .steps { display: flex; flex-direction: column; gap: 0; }
+    .step {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      width: 56px; height: 56px; flex-shrink: 0;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.15));
+      border: 1px solid rgba(16,185,129,0.2);
+      color: var(--emerald-soft);
+    }
+    .step-content h3 { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: white; margin-bottom: 8px; }
+    .step-content p { font-size: 0.9rem; color: var(--muted); line-height: 1.65; }
+
+    /* ─── COMPARISON TABLE ─── */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .compare-table thead th {
+      padding: 18px 24px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .compare-table thead th:first-child { text-align: left; background: var(--panel); color: var(--muted); }
+    .compare-table thead th.old { background: rgba(239,68,68,0.08); color: #fca5a5; border: 1px solid rgba(239,68,68,0.12); }
+    .compare-table thead th.new { background: rgba(16,185,129,0.1); color: var(--emerald-soft); border: 1px solid rgba(16,185,129,0.2); }
+    .compare-table tbody tr { border-bottom: 1px solid var(--border); }
+    .compare-table tbody tr:last-child { border-bottom: none; }
+    .compare-table tbody td {
+      padding: 16px 24px;
+      font-size: 0.9rem;
+    }
+    .compare-table tbody td:first-child { background: var(--panel); color: var(--text); font-weight: 500; }
+    .compare-table tbody td.old { background: rgba(239,68,68,0.04); color: #fca5a5; text-align: center; border: 1px solid rgba(239,68,68,0.06); }
+    .compare-table tbody td.new { background: rgba(16,185,129,0.05); color: var(--emerald-soft); text-align: center; border: 1px solid rgba(16,185,129,0.08); }
+
+    /* ─── FOOTER CTA ─── */
+    .footer-cta {
+      text-align: center;
+      padding: 100px 0 60px;
+    }
+    .footer-cta h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 900;
+      color: white;
+      margin-bottom: 20px;
+    }
+    .footer-cta p { font-size: 1.1rem; color: var(--muted); max-width: 500px; margin: 0 auto 40px; }
+    .powered-by {
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+    .powered-by strong { color: var(--emerald-soft); }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0;
+    }
+
+    /* ─── SCROLL ANIMATION ─── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 700px) {
+      .hero-stats { gap: 24px; }
+      .roi-section { padding: 36px 24px; }
+      .quote-block { padding: 32px 24px; }
+      .step { flex-direction: column; gap: 16px; }
+      .compare-table { font-size: 0.8rem; }
+      .compare-table thead th, .compare-table tbody td { padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-canvas">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+<div class="grid-overlay"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="inner">
+    <div class="logo">AXORA <span>INSTITUTIONAL OS</span></div>
+    <div class="nav-badge">⚡ Powered by NEXORA AI</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow">Africa's Most Advanced School Management Platform</div>
+    <h1>
+      Run Your School Like<br/>
+      <span class="gradient">a Neural Network</span>
+    </h1>
+    <p class="hero-subtitle">
+      AXORA replaces scattered registers, paper ledgers, and manual processes with a single,
+      intelligent operating system — giving school owners complete real-time control
+      over every aspect of their institution.
+    </p>
+    <div class="hero-cta">
+      <a href="#modules" class="btn-primary">🚀 Explore the Platform</a>
+      <a href="#how" class="btn-outline">📊 See How It Works</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">9</div>
+        <div class="stat-label">Integrated Modules</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Real-Time Data</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Manual Registers</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">AI Monitoring</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="wrap">
+    <div class="section-header fade-in">
+      <div class="section-tag">⚠️ The Problem</div>
+      <h2 class="section-title">What Most Schools Deal With Every Day</h2>
+      <p class="section-sub">Before AXORA, running a school meant juggling chaos — and hoping nothing fell through the cracks.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card fade-in">
+        <div class="problem-icon">📋</div>
+        <h3>Manual Attendance = Lost Revenue</h3>
+        <p>Paper registers are forged, forgotten, or lost. Ghost students go undetected for weeks. You're paying for pupils who aren't there.</p>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="problem-icon">💸</div>
+        <h3>Fee Leakages No One Catches</h3>
+        <p>Cash payments are misrecorded. Staff collect fees that never hit the school account. Debt piles up invisibly until it's too late.</p>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="problem-icon">📊</div>
+        <h3>Owner Flying Blind</h3>
+        <p>You only see last month's data. No real-time view of enrolment, performance, or cash position. Decisions are based on guesswork instead of facts.</p>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="problem-icon">🔒</div>
+        <h3>Zero Campus Security Intelligence</h3>
+        <p>No record of who enters your gates. Strangers walk in undetected. Incidents happen with no footage or accountability trail.</p>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="problem-icon">🗂️</div>
+        <h3>Exam Malpractice & Leakage</h3>
+        <p>Paper-based exams are leaked, copied, and marked inconsistently. Results take weeks to compile. Parents lose confidence.</p>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="problem-icon">📞</div>
+        <h3>Parent Communication Gaps</h3>
+        <p>Parents only find out their child has been absent for a week when they bump into a teacher. No system, no accountability, no trust.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MODULES -->
+<section id="modules">
+  <div class="wrap">
+    <div class="section-header fade-in">
+      <div class="section-tag">🧩 The Platform</div>
+      <h2 class="section-title">Everything Your School Needs. One Platform.</h2>
+      <p class="section-sub">AXORA's 9 modules work together as a single intelligent system — sharing data, triggering actions, and giving you complete institutional command.</p>
+    </div>
+    <div class="modules-grid">
+
+      <div class="module-card fade-in">
+        <div class="accent-bar" style="background: linear-gradient(90deg, #6366f1, #38bdf8);"></div>
+        <div class="card-icon" style="background: rgba(99,102,241,0.12);">👁️</div>
+        <h3>Deep Vision Neural Matrix</h3>
+        <p>AI-powered facial recognition connects to your existing cameras and automatically takes attendance for every student and staff member.</p>
+        <ul class="feature-list">
+          <li>Works with Hikvision NVRs & IP cameras</li>
+          <li>Instant Firestore attendance ledger</li>
+          <li>Real-time confidence scores & role classification</li>
+          <li>No manual roll call. Ever.</li>
+        </ul>
+      </div>
+
+      <div class="module-card fade-in">
+        <div class="accent-bar" style="background: linear-gradient(90deg, #10b981, #6366f1);"></div>
+        <div class="card-icon" style="background: rgba(16,185,129,0.12);">🧠</div>
+        <h3>Admin Intelligence Hub</h3>
+        <p>Ask AXORA anything in plain English. Get instant strategic insights, automated reports, and campus-wide action commands.</p>
+        <ul class="feature-list">
+          <li>"Show me students at risk of failing"</li>
+          <li>"Summarise this term's revenue gap"</li>
+          <li>"Send alerts to all guardians with debt"</li>
+          <li>Powered by Google Gemini AI</li>
+        </ul>
+      </div>
+
+      <div class="module-card fade-in">
+        <div class="accent-bar" style="background: linear-gradient(90deg, #f59e0b, #ef4444);"></div>
+        <div class="card-icon" style="background: rgba(245,158,11,0.12);">🧾</div>
+        <h3>Financial Command Centre</h3>
+        <p>Complete visibility over every naira that enters or leaves your institution — from tuition to transport to PTA fees.</p>
+        <ul class="feature-list">
+          <li>Fee splitting: Tuition, PTA, Exam, Transport</li>
+          <li>Real-time debt recovery registry</li>
+          <li>Scholarship & sibling discount logic</li>
+          <li>Digital invoicing & payment tracking</li>
+        </ul>
+      </div>
+
+      <div class="module-card fade-in">
+        <div class="accent-bar" style="background: linear-gradient(90deg, #38bdf8, #10b981);"></div>
+        <div class="card-icon" style="background: rgba(56,189,248,0.12);">🎓</div>
+        <h3>Academic Engine</h3>
+        <p>Flexible grading, automated promotions, and a dynamic report card builder — adapting to how your school actually works.</p>
+        <ul class="feature-list">
+          <li>GPA, A-F, percentages, or custom scales</li>
+          <li>Smart automatic vs conditional promotion</li>
+          <li>Subject prerequisite mapping</li>
+          <li>Mid-term & end-of-term report cards</li>
+        </ul>
+      </div>
+
+      <div class="module-card fade-in">
+        <div class="accent-bar" style="background: linear-gradient(90deg, #ec4899, #6366f1);"></div>
+        <div class="card-icon" style="background: rgba(236,72,153,0.12);">📝</div>
+        <h3>CBT Engine & AI Examiner</h3>
+        <p>Generate entire exams from a topic or syllabus in seconds. Monitor students live with webcam proctoring during exams.</p>
+        <ul class="feature-list">
+          <li>AI question generation from syllabus text</li>
+          <li>Live webcam proctoring (phone/tab detection)</li>
+          <li>Draft → Published → Active lifecycle</li>
+          <li>Instant auto-marking & result generation</li>
+        </ul>
+      </div>
+
+      <div class="module-card fade-in">
+        <div class="accent-bar" style="background: linear-gradient(90deg, #10b981, #f59e0b);"></div>
+        <div class="card-icon" style="background: rgba(16,185,129,0.12);">⚙️</div>
+        <h3>Smart Workflow Automation</h3>
+        <p>Set rules once. Let AXORA handle the rest — automatically notifying, escalating, and reporting without staff lifting a finger.</p>
+        <ul class="feature-list">
+          <li>"Absent 2 days → WhatsApp guardian"</li>
+          <li>"Debt unpaid 2 weeks → Escalate to owner"</li>
+          <li>Scheduled fee reminders & result alerts</li>
+          <li>Reduces admin workload by up to 70%</li>
+        </ul>
+      </div>
+
+      <div class="module-card fade-in">
+        <div class="accent-bar" style="background: linear-gradient(90deg, #6366f1, #38bdf8);"></div>
+        <div class="card-icon" style="background: rgba(99,102,241,0.12);">🆔</div>
+        <h3>Neural Pass & Digital IDs</h3>
+        <p>Every student, teacher, and staff member gets a secured digital identity card with real-time access control and QR verification.</p>
+        <ul class="feature-list">
+          <li>Unique identity hash per person</li>
+          <li>Real-time campus access rank</li>
+          <li>QR scan at physical checkpoints</li>
+          <li>Axora-Verified security status</li>
+        </ul>
+      </div>
+
+      <div class="module-card fade-in">
+        <div class="accent-bar" style="background: linear-gradient(90deg, #38bdf8, #6366f1);"></div>
+        <div class="card-icon" style="background: rgba(56,189,248,0.12);">🎙️</div>
+        <h3>Neural Voice & Resources</h3>
+        <p>AXORA reads reports to you. Upload syllabi, get instant summaries, quizzes, and briefings with professional voice synthesis.</p>
+        <ul class="feature-list">
+          <li>Text-to-speech report briefings</li>
+          <li>Document → quiz conversion</li>
+          <li>Syllabus ingestion & summarisation</li>
+          <li>Always-available knowledge base</li>
+        </ul>
+      </div>
+
+      <div class="module-card fade-in" style="border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.04);">
+        <div class="accent-bar" style="background: linear-gradient(90deg, #10b981, #34d399);"></div>
+        <div class="card-icon" style="background: rgba(16,185,129,0.15);">📡</div>
+        <h3>Owner's Live Command Dashboard</h3>
+        <p>A dedicated executive view showing every KPI — enrolment, attendance rate, revenue collected, debt outstanding — live, right now, from anywhere.</p>
+        <ul class="feature-list">
+          <li>No waiting for month-end reports</li>
+          <li>Drill down to any class or student</li>
+          <li>Performance trends & early warnings</li>
+          <li>Access from your phone, anywhere</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COMPARISON -->
+<section id="compare">
+  <div class="wrap">
+    <div class="section-header fade-in" style="text-align:center; max-width: 620px; margin: 0 auto 56px;">
+      <div class="section-tag">⚡ Before vs After</div>
+      <h2 class="section-title">The AXORA Difference</h2>
+      <p class="section-sub" style="margin: 0 auto;">See exactly what changes when AXORA takes over your school operations.</p>
+    </div>
+    <div class="fade-in" style="overflow-x: auto; border-radius: 16px; border: 1px solid var(--border);">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th style="text-align:left; background: var(--panel); padding: 18px 24px; color: var(--muted); font-size:0.82rem; letter-spacing:0.1em; text-transform:uppercase;">Area</th>
+            <th class="old">❌ Before AXORA</th>
+            <th class="new">✅ With AXORA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Attendance</td>
+            <td class="old">Paper register, prone to forgery</td>
+            <td class="new">Automatic facial recognition, instant ledger</td>
+          </tr>
+          <tr>
+            <td>Fee Collection</td>
+            <td class="old">Cash at the gate, no real-time tracking</td>
+            <td class="new">Digital invoicing, live debt dashboard</td>
+          </tr>
+          <tr>
+            <td>Owner Reporting</td>
+            <td class="old">Monthly PDF, often outdated</td>
+            <td class="new">Live KPI dashboard, 24/7 access from any device</td>
+          </tr>
+          <tr>
+            <td>Exams</td>
+            <td class="old">Paper-based, risk of leakage, weeks to mark</td>
+            <td class="new">AI-generated CBT, live proctoring, instant results</td>
+          </tr>
+          <tr>
+            <td>Parent Communication</td>
+            <td class="old">Word of mouth, calls, or nothing</td>
+            <td class="new">Automated WhatsApp & SMS from rule triggers</td>
+          </tr>
+          <tr>
+            <td>Security</td>
+            <td class="old">Gate register, unreliable</td>
+            <td class="new">Camera-linked identity matrix, QR checkpoint</td>
+          </tr>
+          <tr>
+            <td>Report Cards</td>
+            <td class="old">Handwritten or Excel, takes days</td>
+            <td class="new">Auto-generated, high-fidelity, published instantly</td>
+          </tr>
+          <tr>
+            <td>Admin Workload</td>
+            <td class="old">Manual, repetitive, error-prone</td>
+            <td class="new">Automated workflows handle 70%+ of routine tasks</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ROI -->
+<section id="roi">
+  <div class="wrap">
+    <div class="roi-section fade-in">
+      <div style="text-align:center; margin-bottom: 8px;">
+        <div class="section-tag">📈 Return on Investment</div>
+        <h2 class="section-title" style="text-align:center;">What School Owners Actually Gain</h2>
+        <p class="section-sub" style="text-align:center; margin: 0 auto;">AXORA doesn't just organise your school — it unlocks revenue and eliminates waste.</p>
+      </div>
+      <div class="roi-grid">
+        <div class="roi-card">
+          <div class="roi-num">↑40%</div>
+          <div class="roi-label">Improvement in fee collection rate through automated reminders & real-time debt tracking</div>
+        </div>
+        <div class="roi-card">
+          <div class="roi-num">↓70%</div>
+          <div class="roi-label">Reduction in admin workload through smart workflow automation</div>
+        </div>
+        <div class="roi-card">
+          <div class="roi-num">100%</div>
+          <div class="roi-label">Attendance accuracy with AI facial recognition replacing paper registers</div>
+        </div>
+        <div class="roi-card">
+          <div class="roi-num">3×</div>
+          <div class="roi-label">Faster exam creation, marking, and result publication using the AI CBT engine</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="wrap">
+    <div class="section-header fade-in">
+      <div class="section-tag">🔧 Deployment</div>
+      <h2 class="section-title">Up and Running in 4 Steps</h2>
+      <p class="section-sub">AXORA is designed for rapid deployment. No lengthy IT projects. No disruption to school operations.</p>
+    </div>
+    <div class="steps">
+      <div class="step fade-in">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <h3>Onboard Your Institution</h3>
+          <p>We configure your school's grading scheme, fee structure, academic calendar, and class hierarchy. Your data, your rules — set up in a single guided session within 24 hours.</p>
+        </div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <h3>Connect Your Cameras & Devices</h3>
+          <p>AXORA integrates with your existing Hikvision NVRs, DVRs, or IP cameras via RTSP. No new hardware required in most cases. Our Deep Vision engine is activated immediately after connection.</p>
+        </div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <h3>Enrol Students, Staff & Guardians</h3>
+          <p>Bulk import existing records or enrol fresh. Students are photographed once for facial recognition. Guardians receive a parent portal link. Teachers get their dashboard access immediately.</p>
+        </div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <h3>Go Live — Full Institutional Command</h3>
+          <p>The school operates from Day 1 with real-time attendance, live financial tracking, and AI-powered administration. You and your board have a live dashboard from anywhere in the world, on any device.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- QUOTE -->
+<section>
+  <div class="wrap">
+    <div class="quote-block fade-in">
+      <div class="quote-mark">"</div>
+      <p class="quote-text">
+        The question is no longer whether your school can afford a system like AXORA.
+        The question is how much longer you can afford to operate without one.
+        Every day without real-time data is a day of lost fees, missed risks, and unaccountable decisions.
+      </p>
+      <div class="quote-author">— AXORA Executive Brief, 2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER CTA -->
+<section class="footer-cta">
+  <div class="wrap">
+    <div class="fade-in">
+      <h2>Ready to Transform<br/>Your Institution?</h2>
+      <p>Join forward-thinking schools already running on AXORA's neural operating system.</p>
+      <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+        <a href="#modules" class="btn-primary" style="font-size:1rem; padding:16px 36px;">🚀 Get Started with AXORA</a>
+        <a href="#compare" class="btn-outline" style="font-size:1rem; padding:16px 32px;">📋 See Comparison</a>
+      </div>
+    </div>
+    <div class="powered-by">
+      <strong>AXORA Institutional OS</strong> &nbsp;·&nbsp; Powered by <strong>NEXORA AI</strong> &nbsp;·&nbsp; Built for Africa's Next Generation Schools
+    </div>
+  </div>
+</section>
+
+<script>
+  // Intersection Observer for fade-in animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, (entry.target.dataset.delay || 0));
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.fade-in').forEach((el, i) => {
+    el.dataset.delay = (i % 4) * 80;
+    observer.observe(el);
+  });
+
+  // Smooth anchor scroll
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(anchor.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+
+</body>
+</html>

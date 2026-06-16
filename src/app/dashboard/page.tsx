@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser, useDoc } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import {
   BookOpen, ArrowRight, Sparkles, Zap, ShieldCheck, Eye, Activity, Loader2,
   ChevronRight, Cpu, TrendingUp, Brain, DollarSign, GraduationCap, Users,
-  CheckCircle2, AlertTriangle, Camera, ClipboardList, BarChart3, Bell
+  CheckCircle2, AlertTriangle, Camera, ClipboardList, BarChart3, Bell,
+  Wifi, Radio
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -17,15 +18,18 @@ import { formatRoleLabel, isAdminRole } from '@/lib/roles';
 import { CampusNoticeBoard } from '@/components/campus-notice-board';
 import { startAxoraLoading, stopAxoraLoading } from '@/lib/axora-loading';
 import { cn } from '@/lib/utils';
+import { useRealtimeActivity } from '@/hooks/use-realtime-activity';
+import { useRealtimeKpis } from '@/hooks/use-realtime-kpis';
 
-// Animated KPI Ring Component
+// ── Animated KPI Ring ─────────────────────────────────────────────────────────
 function KpiRing({
-  value, max = 100, size = 80, strokeWidth = 6, color = '#6366f1', label, sublabel
+  value, max = 100, size = 80, strokeWidth = 6, color = '#6366f1', label, sublabel, changed
 }: {
   value: number; max?: number; size?: number; strokeWidth?: number;
-  color?: string; label: string; sublabel?: string;
+  color?: string; label: string; sublabel?: string; changed?: boolean;
 }) {
   const [animated, setAnimated] = useState(0);
+  const [flash, setFlash] = useState(false);
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const pct = Math.min(animated / max, 1);
@@ -36,9 +40,22 @@ function KpiRing({
     return () => clearTimeout(timer);
   }, [value]);
 
+  useEffect(() => {
+    if (changed) {
+      setFlash(true);
+      setTimeout(() => setFlash(false), 1500);
+    }
+  }, [changed, value]);
+
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className={cn('flex flex-col items-center gap-2 transition-all duration-500', flash && 'scale-105')}>
       <div className="relative" style={{ width: size, height: size }}>
+        {flash && (
+          <div
+            className="absolute inset-0 rounded-full opacity-0 animate-ping"
+            style={{ backgroundColor: color, opacity: 0.15 }}
+          />
+        )}
         <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
           <circle cx={size / 2} cy={size / 2} r={radius}
             fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth} />
@@ -47,12 +64,12 @@ function KpiRing({
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
             strokeLinecap="round"
-            style={{ transition: 'stroke-dashoffset 1.5s cubic-bezier(0.16,1,0.3,1)' }}
+            style={{ transition: 'stroke-dashoffset 1.5s cubic-bezier(0.16,1,0.3,1)', filter: `drop-shadow(0 0 4px ${color}88)` }}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-sm font-black text-white" style={{ color }}>
-            {typeof value === 'number' && max === 100 ? `${Math.round(animated)}%` : animated}
+            {typeof value === 'number' && max === 100 ? `${Math.round(animated)}%` : Math.round(animated)}
           </span>
         </div>
       </div>
@@ -64,25 +81,51 @@ function KpiRing({
   );
 }
 
-// Live Activity Feed Item
-function FeedItem({ icon: Icon, title, description, time, type }: {
-  icon: any; title: string; description: string; time: string;
-  type: 'success' | 'alert' | 'info' | 'primary';
+// ── Live Activity Feed Item ───────────────────────────────────────────────────
+const EVENT_ICONS: Record<string, any> = {
+  identity: Camera,
+  finance: DollarSign,
+  security: ShieldCheck,
+  exam: ClipboardList,
+  admin: Users,
+  ai: Brain,
+  info: Bell,
+};
+
+const EVENT_COLORS: Record<string, string> = {
+  identity: 'bg-primary/20 text-primary border-primary/30',
+  finance: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  security: 'bg-red-500/20 text-red-400 border-red-500/30',
+  exam: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  admin: 'bg-violet-500/20 text-violet-400 border-violet-500/30',
+  ai: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30',
+  info: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+};
+
+function FeedItem({ type, title, description, time, isNew }: {
+  type: string; title: string; description: string; time: string; isNew?: boolean;
 }) {
-  const colors = {
-    success: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    alert: 'bg-red-500/20 text-red-400 border-red-500/30',
-    info: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    primary: 'bg-primary/20 text-primary border-primary/30',
-  };
+  const Icon = EVENT_ICONS[type] ?? Bell;
+  const colors = EVENT_COLORS[type] ?? EVENT_COLORS.info;
+
   return (
-    <div className="feed-item group animate-in fade-in slide-in-from-left-2 duration-500">
+    <div className={cn(
+      'feed-item group transition-all duration-500',
+      isNew && 'animate-in fade-in slide-in-from-left-4 duration-500'
+    )}>
       <div className="flex items-start gap-3">
-        <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-[10px]', colors[type])}>
+        <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-[10px]', colors)}>
           <Icon className="h-3 w-3" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-white truncate">{title}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-xs font-bold text-white truncate">{title}</p>
+            {isNew && (
+              <span className="shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 text-[7px] font-black uppercase px-1.5 py-0.5 border border-emerald-500/30 animate-pulse">
+                NEW
+              </span>
+            )}
+          </div>
           <p className="text-[10px] text-white/40 leading-relaxed">{description}</p>
         </div>
         <span className="text-[8px] text-white/25 font-mono shrink-0">{time}</span>
@@ -91,36 +134,55 @@ function FeedItem({ icon: Icon, title, description, time, type }: {
   );
 }
 
-const ACTIVITY_FEED = [
-  { icon: Camera, title: 'Neural Scan — Main Gate', description: '32 students identified • 94% avg confidence', time: '2m', type: 'primary' as const },
-  { icon: DollarSign, title: 'Payment Cleared', description: 'STU-8821 • $1,500 via Paystack', time: '8m', type: 'success' as const },
-  { icon: ShieldCheck, title: 'Unknown Identity Alert', description: 'Node 09 flagged intruder in restricted zone', time: '15m', type: 'alert' as const },
-  { icon: ClipboardList, title: 'Exam Session Live', description: 'Mathematics Mid-Term • 45 students active', time: '22m', type: 'info' as const },
-  { icon: Users, title: 'New Student Registered', description: 'Alice Johnson added to JSS-3A registry', time: '35m', type: 'primary' as const },
-  { icon: Brain, title: 'AXIOM Analysis Ready', description: 'Monthly revenue report generated', time: '1h', type: 'info' as const },
-];
+// ── Neural Status Pill ────────────────────────────────────────────────────────
+function NeuralStatusPill({ label, value, icon: Icon }: {
+  label: string; value: string | number; icon: any;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-1.5">
+      <Icon className="h-3 w-3 text-primary opacity-70" />
+      <div>
+        <p className="text-[7px] uppercase font-bold tracking-widest text-white/30">{label}</p>
+        <p className="text-[11px] font-black text-white">{value}</p>
+      </div>
+    </div>
+  );
+}
 
+// ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { user } = useUser();
   const { data: profile } = useDoc(user ? `users/${user.uid}` : null);
+  const { data: school } = useDoc(profile?.schoolId ? `schools/${profile.schoolId}` : null);
   const [adminQuery, setAdminQuery] = useState('');
   const [axoraResponse, setAxoraResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [briefLoaded, setBriefLoaded] = useState(false);
+  const [syncLabel, setSyncLabel] = useState('Syncing…');
 
   const isAdmin = isAdminRole(profile?.role);
   const firstName = profile?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
+  const schoolId = profile?.schoolId as string | undefined;
 
+  // Real-time hooks
+  const { events, newEventId } = useRealtimeActivity(schoolId);
+  const { kpis, changed } = useRealtimeKpis(schoolId);
+
+  // Sync label ticker
   useEffect(() => {
-    const t = setTimeout(() => setBriefLoaded(true), 800);
-    return () => clearTimeout(t);
+    let secs = 0;
+    const interval = setInterval(() => {
+      secs++;
+      setSyncLabel(`Synced ${secs}s ago`);
+      if (secs >= 30) secs = 0;
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  const kpis = [
-    { label: 'Attendance', sublabel: 'Today', value: 94, color: '#6366f1' },
-    { label: 'Fee Collection', sublabel: 'This term', value: 96, color: '#22c55e' },
-    { label: 'Exam Pass Rate', sublabel: 'Last session', value: 88, color: '#3b82f6' },
-    { label: 'Security Index', sublabel: 'Campus risk', value: 98, color: '#8b5cf6' },
+  const kpiConfig = [
+    { label: 'Attendance', sublabel: 'Today', value: kpis.attendance, color: '#6366f1', key: 'attendance' as const },
+    { label: 'Fee Collection', sublabel: 'This term', value: kpis.feeCollection, color: '#22c55e', key: 'feeCollection' as const },
+    { label: 'Exam Pass Rate', sublabel: 'Last session', value: kpis.examPassRate, color: '#3b82f6', key: 'examPassRate' as const },
+    { label: 'Security Index', sublabel: 'Campus risk', value: kpis.securityIndex, color: '#8b5cf6', key: 'securityIndex' as const },
   ];
 
   const moduleCards = [
@@ -141,11 +203,11 @@ export default function DashboardPage() {
       const result = await askAxoraAdmin({
         query: adminQuery,
         schoolContext: {
-          studentCount: 1284,
+          studentCount: kpis.studentsOnCampus,
           teacherCount: 48,
-          revenueCollectionRate: 96,
-          averageAttendance: 94,
-          riskIndex: 0.02,
+          revenueCollectionRate: kpis.feeCollection,
+          averageAttendance: kpis.attendance,
+          riskIndex: (100 - kpis.securityIndex) / 100,
         },
       });
       setAxoraResponse(result);
@@ -178,22 +240,21 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Profile Card */}
-        <div className="glass-card-premium flex animate-in fade-in slide-in-from-right-3 items-center gap-4 p-4 duration-700 delay-100">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-violet-600 text-lg font-black text-white shadow-xl pulse-glow">
-            {profile?.displayName?.[0] || 'A'}
+        {/* Neural Status Pills */}
+        <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-right-3 duration-700 delay-100">
+          <NeuralStatusPill label="On Campus" value={kpis.studentsOnCampus.toLocaleString()} icon={Users} />
+          <NeuralStatusPill label="Active Nodes" value={`${kpis.activeNodes} Online`} icon={Radio} />
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div>
+              <p className="text-[7px] uppercase font-bold tracking-widest text-emerald-400/60">Neural Link</p>
+              <p className="text-[11px] font-black text-emerald-400">Active</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-black uppercase tracking-wider text-foreground">
-              {formatRoleLabel(profile?.role)}
-            </p>
-            <p className="font-mono text-[10px] text-primary/70">NODE_{user?.uid.slice(0, 8)}</p>
-          </div>
-          <div className="flex h-2 w-2 rounded-full bg-emerald-500 ml-2 neural-pulse" />
         </div>
       </div>
 
-      {/* ── KPI Rings Row ────────────────────────────────── */}
+      {/* ── KPI Matrix ─────────────────────────────────────── */}
       <Card className="glass-card border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
         <CardHeader className="pb-4 border-b border-white/5">
           <div className="flex items-center justify-between">
@@ -201,15 +262,24 @@ export default function DashboardPage() {
               <BarChart3 className="h-4 w-4 text-primary" />
               <CardTitle className="text-sm font-bold uppercase tracking-widest text-foreground">Institutional KPI Matrix</CardTitle>
             </div>
-            <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black uppercase">
-              <span className="status-live" />Live
-            </Badge>
+            <div className="flex items-center gap-3">
+              <span className="text-[8px] font-mono text-white/25">{syncLabel}</span>
+              <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black uppercase">
+                <span className="status-live" />Live
+              </Badge>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="pt-6 pb-4">
           <div className="flex flex-wrap justify-around gap-6">
-            {kpis.map(kpi => (
-              <KpiRing key={kpi.label} {...kpi} size={90} strokeWidth={7} />
+            {kpiConfig.map(kpi => (
+              <KpiRing
+                key={kpi.label}
+                {...kpi}
+                size={90}
+                strokeWidth={7}
+                changed={changed[kpi.key]}
+              />
             ))}
           </div>
         </CardContent>
@@ -241,7 +311,7 @@ export default function DashboardPage() {
                 className="h-12 rounded-xl bg-white px-6 font-black text-primary shadow-xl transition-all hover:bg-indigo-50 hover:scale-[1.02]"
                 disabled={loading}
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="mr-2 h-4 w-4" /> Run</>}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Sparkles className="mr-2 h-4 w-4" />Run</>}
               </Button>
             </form>
             {axoraResponse && (
@@ -310,10 +380,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Bottom Row: Activity Feed + Notice Board ──────── */}
+      {/* ── Bottom Row: Live Activity Feed + Notice Board ──── */}
       <div className="grid gap-6 lg:grid-cols-12">
 
-        {/* Live Activity Feed */}
+        {/* Live Activity Feed — Real-Time */}
         <Card className="glass-card border-white/5 lg:col-span-5">
           <CardHeader className="border-b border-white/5 pb-4">
             <div className="flex items-center justify-between">
@@ -321,14 +391,44 @@ export default function DashboardPage() {
                 <Activity className="h-4 w-4 text-primary animate-pulse" />
                 <CardTitle className="text-sm font-bold uppercase tracking-widest text-foreground">Live Activity Feed</CardTitle>
               </div>
-              <Badge className="bg-white/5 border-white/10 text-[8px] text-white/40">Real-time</Badge>
+              <div className="flex items-center gap-2">
+                {events.length > 0 && (
+                  <span className="text-[8px] font-mono text-white/25">{events.length} events</span>
+                )}
+                <Badge className="bg-emerald-500/10 border-emerald-500/20 text-[8px] text-emerald-400 font-black flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Real-time
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-1">
-              {ACTIVITY_FEED.map((item, i) => (
-                <FeedItem key={i} {...item} />
-              ))}
+              {events.length === 0 ? (
+                // Loading skeleton
+                [...Array(4)].map((_, i) => (
+                  <div key={i} className="feed-item">
+                    <div className="flex items-start gap-3">
+                      <div className="h-7 w-7 rounded-lg shimmer shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3 w-32 rounded shimmer" />
+                        <div className="h-2.5 w-48 rounded shimmer" />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                events.slice(0, 7).map((event, i) => (
+                  <FeedItem
+                    key={event.id}
+                    type={event.type}
+                    title={event.title}
+                    description={event.description}
+                    time={event.time}
+                    isNew={event.id === newEventId}
+                  />
+                ))
+              )}
             </div>
           </CardContent>
           <CardFooter className="border-t border-white/5 p-4">
@@ -340,7 +440,7 @@ export default function DashboardPage() {
 
         {/* Notice Board */}
         <div className="lg:col-span-7">
-          <CampusNoticeBoard schoolId={profile?.schoolId as string | undefined} compact />
+          <CampusNoticeBoard schoolId={schoolId} compact />
         </div>
       </div>
 

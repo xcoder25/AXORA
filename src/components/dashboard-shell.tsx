@@ -7,7 +7,7 @@ import { useUser, useDoc, useAuth } from '@/firebase';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/dashboard-sidebar';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, Building, Command } from 'lucide-react';
+import { LogOut, Building, Command, Radio, Cpu, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatRoleLabel, isAdminRole } from '@/lib/roles';
@@ -151,6 +151,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <Separator orientation="vertical" className="mx-2 h-4 bg-border/60" />
           <div className="flex flex-1 items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Institution Info */}
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 shadow-sm transition-transform hover:scale-105">
                 <Building className="h-4 w-4 text-primary" />
               </div>
@@ -164,6 +165,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* Neural Link Status */}
+              <div className="hidden lg:flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Neural Link</span>
+              </div>
               {/* Command Palette Trigger */}
               <button
                 onClick={() => {
