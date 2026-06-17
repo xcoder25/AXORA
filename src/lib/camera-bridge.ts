@@ -25,7 +25,7 @@ export type CameraStreamRequest = {
  */
 const SURVEILLANCE_API =
   process.env.NEXT_PUBLIC_SURVEILLANCE_API_URL?.replace(/\/$/, '') ??
-  'http://localhost:8000';
+  'https://axora-765938782391.europe-west1.run.app';
 
 const GO2RTC_URL =
   process.env.NEXT_PUBLIC_GO2RTC_URL?.replace(/\/$/, '') ??

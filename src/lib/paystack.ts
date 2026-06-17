@@ -44,7 +44,7 @@ export function loadPaystackScript(): Promise<void> {
 }
 
 export function getPaystackPublicKey(): string {
-  return process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '';
+  return process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 }
 
 /** Paystack expects amount in smallest currency unit (kobo for NGN, cents for USD). */
